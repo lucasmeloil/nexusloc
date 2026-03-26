@@ -1,0 +1,367 @@
+import React, { useEffect, useState } from 'react';
+import { supabase } from '../lib/supabase';
+import type { SystemSettings } from '../types';
+import {
+  Building2,
+  Phone,
+  Mail,
+  MapPin,
+  FileText,
+  Save,
+  CheckCircle2,
+  RotateCcw,
+  PlusCircle,
+  Loader2,
+  Clock,
+  Coins,
+} from 'lucide-react';
+
+const DEFAULT_SETTINGS: SystemSettings = {
+  company_name: 'NexusLoc Rental',
+  company_cnpj: '',
+  company_address: '',
+  company_phone: '',
+  company_email: '',
+  logo_url: '/logo.png',
+  currency: 'BRL',
+  daily_rental_start_time: '08:00',
+  daily_rental_end_time: '18:00',
+  contract_clauses: [
+    'O locatário deve devolver o veículo com o mesmo nível de combustível.',
+    'Multas de trânsito ocorridas durante o período de locação são de responsabilidade do locatário.',
+    'Atraso na devolução acarretará cobrança de hora extra proporcional.'
+  ],
+};
+
+const Settings: React.FC = () => {
+  const [settings, setSettings] = useState<SystemSettings>(DEFAULT_SETTINGS);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    fetchSettings();
+  }, []);
+
+  const fetchSettings = async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('settings')
+        .select('*')
+        .single();
+
+      if (error && error.code !== 'PGRST116') throw error;
+      if (data) setSettings(data);
+    } catch (error) {
+      console.error('Error fetching settings:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from('settings')
+        .upsert({ 
+          ...settings, 
+          id: settings.id || '00000000-0000-0000-0000-000000000001',
+          updated_at: new Date().toISOString() 
+        });
+
+      if (error) throw error;
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    } catch (error) {
+      console.error('Error saving settings:', error);
+      alert('Erro ao salvar configurações.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const set = (key: keyof SystemSettings, value: any) =>
+    setSettings(prev => ({ ...prev, [key]: value }));
+
+  const udpateClause = (index: number, value: string) => {
+    const newClauses = [...settings.contract_clauses];
+    newClauses[index] = value;
+    set('contract_clauses', newClauses);
+  };
+
+  const addClause = () => {
+    set('contract_clauses', [...settings.contract_clauses, '']);
+  };
+
+  const removeClause = (index: number) => {
+    set('contract_clauses', settings.contract_clauses.filter((_, i) => i !== index));
+  };
+
+  const Field = ({
+    label,
+    icon,
+    children,
+  }: {
+    label: string;
+    icon?: React.ReactNode;
+    children: React.ReactNode;
+  }) => (
+    <div className="space-y-1.5">
+      <label className="flex items-center gap-2 text-sm font-bold text-slate-700">
+        {icon && <span className="text-primary-500">{icon}</span>}
+        {label}
+      </label>
+      {children}
+    </div>
+  );
+
+  const Section = ({
+    icon,
+    title,
+    desc,
+    children,
+  }: {
+    icon: React.ReactNode;
+    title: string;
+    desc: string;
+    children: React.ReactNode;
+  }) => (
+    <div className="card">
+      <div className="flex items-center gap-3 mb-6 pb-5 border-b border-slate-100">
+        <div className="p-2.5 bg-primary-50 text-primary-600 rounded-xl">{icon}</div>
+        <div>
+          <h3 className="text-lg font-bold text-slate-900">{title}</h3>
+          <p className="text-sm text-slate-500">{desc}</p>
+        </div>
+      </div>
+      <div className="space-y-5">{children}</div>
+    </div>
+  );
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 gap-4">
+        <Loader2 className="w-12 h-12 animate-spin text-primary-500" />
+        <p className="text-slate-500 font-medium">Carregando configurações...</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-8 fade-in max-w-4xl mx-auto pb-10">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+        <div>
+          <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">Configurações do Sistema</h2>
+          <p className="text-slate-500 mt-1">Dados da empresa e padrões para novos contratos.</p>
+        </div>
+        {saved && (
+          <div className="flex items-center gap-2 bg-emerald-50 text-emerald-700 border border-emerald-200 px-4 py-2 rounded-xl font-bold text-sm animate-in fade-in zoom-in duration-300">
+            <CheckCircle2 size={18} />
+            Alterações salvas com sucesso!
+          </div>
+        )}
+      </div>
+
+      <form onSubmit={handleSave} className="space-y-6">
+        {/* Dados da Empresa */}
+        <Section
+          icon={<Building2 size={22} />}
+          title="Dados da Locadora"
+          desc="Essas informações serão exibidas no cabeçalho e rodapé dos contratos PDF."
+        >
+          <Field label="Nome Empresarial / Fantasia" icon={<Building2 size={16} />}>
+            <input
+              type="text"
+              value={settings.company_name}
+              onChange={e => set('company_name', e.target.value)}
+              placeholder="Ex: NexusLoc Locações LTDA"
+              className="input-field"
+              required
+            />
+          </Field>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <Field label="CNPJ" icon={<FileText size={16} />}>
+              <input
+                type="text"
+                value={settings.company_cnpj}
+                onChange={e => set('company_cnpj', e.target.value)}
+                placeholder="00.000.000/0001-00"
+                className="input-field"
+              />
+            </Field>
+            <Field label="Telefone de Contato" icon={<Phone size={16} />}>
+              <input
+                type="tel"
+                value={settings.company_phone}
+                onChange={e => set('company_phone', e.target.value)}
+                placeholder="(11) 99999-9999"
+                className="input-field"
+              />
+            </Field>
+          </div>
+
+          <Field label="Endereço da Sede" icon={<MapPin size={16} />}>
+            <input
+              type="text"
+              value={settings.company_address}
+              onChange={e => set('company_address', e.target.value)}
+              placeholder="Logradouro, Nº, Bairro, Cidade-UF"
+              className="input-field"
+            />
+          </Field>
+
+          <Field label="E-mail Corporativo" icon={<Mail size={16} />}>
+            <input
+              type="email"
+              value={settings.company_email}
+              onChange={e => set('company_email', e.target.value)}
+              placeholder="contato@nexusloc.com"
+              className="input-field"
+            />
+          </Field>
+
+          <Field label="URL do Logotipo (Sugerido: PNG fundo transparente)" icon={<PlusCircle size={16} />}>
+            <div className="flex gap-4 items-start">
+              <input
+                type="text"
+                value={settings.logo_url}
+                onChange={e => set('logo_url', e.target.value)}
+                placeholder="https://exemplo.com/logo.png"
+                className="input-field flex-1"
+              />
+              {settings.logo_url && (
+                <div className="h-11 w-11 rounded-lg border border-slate-200 bg-slate-50 p-1 flex items-center justify-center overflow-hidden shrink-0 shadow-sm">
+                  <img src={settings.logo_url} alt="Preview" className="max-h-full max-w-full object-contain" />
+                </div>
+              )}
+            </div>
+          </Field>
+        </Section>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Horários */}
+          <Section
+            icon={<Clock size={22} />}
+            title="Prazos de Diária"
+            desc="Define o horário padrão para cobrança."
+          >
+            <div className="grid grid-cols-1 gap-5">
+              <Field label="Início da Diária" icon={<Clock size={16} />}>
+                <input
+                  type="time"
+                  value={settings.daily_rental_start_time}
+                  onChange={e => set('daily_rental_start_time', e.target.value)}
+                  className="input-field"
+                />
+              </Field>
+              <Field label="Término da Diária (Check-out)" icon={<Clock size={16} />}>
+                <input
+                  type="time"
+                  value={settings.daily_rental_end_time}
+                  onChange={e => set('daily_rental_end_time', e.target.value)}
+                  className="input-field"
+                />
+              </Field>
+            </div>
+          </Section>
+
+          {/* Moeda */}
+          <Section
+            icon={<Coins size={22} />}
+            title="Financeiro"
+            desc="Símbolo monetário do sistema."
+          >
+            <Field label="Moeda Padrão" icon={<Coins size={16} />}>
+              <select
+                value={settings.currency}
+                onChange={e => set('currency', e.target.value)}
+                className="input-field font-bold"
+              >
+                <option value="BRL">Real Brasileiro (R$)</option>
+                <option value="USD">Dólar Americano ($)</option>
+                <option value="EUR">Euro (€)</option>
+              </select>
+            </Field>
+          </Section>
+        </div>
+
+        {/* Cláusulas do Contrato */}
+        <Section
+          icon={<FileText size={22} />}
+          title="Cláusulas Padrão do Contrato"
+          desc="Estas cláusulas serão impressas automaticamente em cada novo contrato gerado."
+        >
+          <div className="space-y-3">
+            {settings.contract_clauses.map((clause, idx) => (
+              <div key={idx} className="flex gap-3 group animate-in slide-in-from-right-2 duration-300">
+                <div className="mt-2 text-xs font-black text-slate-300 group-hover:text-primary-400 shrink-0">
+                  {String(idx + 1).padStart(2, '0')}
+                </div>
+                <input
+                  type="text"
+                  value={clause}
+                  onChange={e => udpateClause(idx, e.target.value)}
+                  className="input-field"
+                  placeholder="Descreva a cláusula..."
+                />
+                <button
+                  type="button"
+                  onClick={() => removeClause(idx)}
+                  className="p-2.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all opacity-0 group-hover:opacity-100"
+                >
+                  <RotateCcw size={16} />
+                </button>
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={addClause}
+              className="w-full py-3 border-2 border-dashed border-slate-200 rounded-2xl text-slate-400 hover:text-primary-600 hover:border-primary-300 hover:bg-primary-50/30 transition-all font-bold text-sm flex items-center justify-center gap-2 mt-4"
+            >
+              <PlusCircle size={18} />
+              Adicionar Nova Cláusula
+            </button>
+          </div>
+        </Section>
+
+        {/* Action buttons */}
+        <div className="sticky bottom-6 z-10">
+          <div className="bg-white/80 backdrop-blur-md p-4 rounded-3xl border border-slate-200 shadow-2xl flex flex-col sm:flex-row justify-between gap-3">
+            <button
+              type="button"
+              onClick={fetchSettings}
+              className="btn-secondary"
+              disabled={loading || saving}
+            >
+              <RotateCcw size={18} />
+              Descartar Alterações
+            </button>
+            <button 
+              type="submit" 
+              className="btn-primary sm:min-w-[240px] shadow-lg shadow-primary-500/30"
+              disabled={loading || saving}
+            >
+              {saving ? (
+                <>
+                  <Loader2 size={18} className="animate-spin" />
+                  Salvando...
+                </>
+              ) : (
+                <>
+                  <Save size={18} />
+                  Salvar Todas as Configurações
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  );
+};
+
+export default Settings;
