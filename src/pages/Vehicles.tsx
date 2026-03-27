@@ -11,21 +11,23 @@ import {
   Trash2, 
   Filter,
   Hash,
-  Palette,
-  Tag,
-  CircleCheck,
-  AlertCircle,
-  Clock,
-  Settings,
+  Shield,
+  LayoutGrid,
+  Upload,
+  Image as ImageIcon,
+  Camera,
+  Loader2,
   X,
   Save,
-  Loader2,
   CheckCircle2,
-  DollarSign,
+  AlertCircle,
+  CircleCheck,
+  Clock,
+  Settings,
+  Tag,
+  Palette,
   Calendar,
-  Activity,
-  Shield,
-  LayoutGrid
+  DollarSign
 } from 'lucide-react';
 
 // Stable helper function to prevent focus loss during state updates
@@ -60,7 +62,10 @@ const Vehicles: React.FC = () => {
     category: 'Carro',
     status: 'available' as Vehicle['status'],
     daily_rate: 0,
+    photos_urls: [] as string[],
   });
+  const [newPhotos, setNewPhotos] = useState<File[]>([]);
+  const [uploading, setUploading] = useState(false);
 
   const showToast = (type: 'success' | 'error', msg: string) => {
     setToast({ type, msg });
@@ -91,7 +96,9 @@ const Vehicles: React.FC = () => {
         category: vehicle.category || '',
         status: vehicle.status,
         daily_rate: vehicle.daily_rate || 0,
+        photos_urls: vehicle.photos_urls || [],
       });
+      setNewPhotos([]);
     } else {
       setEditingVehicle(null);
       setFormData({ 
@@ -102,8 +109,10 @@ const Vehicles: React.FC = () => {
         color: '', 
         category: 'Carro', 
         status: 'available', 
-        daily_rate: 0 
+        daily_rate: 0,
+        photos_urls: [],
       });
+      setNewPhotos([]);
     }
     setIsModalOpen(true);
   };
@@ -111,6 +120,36 @@ const Vehicles: React.FC = () => {
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setEditingVehicle(null);
+    setNewPhotos([]);
+  };
+
+  const uploadPhotos = async (): Promise<string[]> => {
+    if (newPhotos.length === 0) return formData.photos_urls || [];
+    
+    const uploadedUrls = [...(formData.photos_urls || [])];
+    
+    for (const file of newPhotos) {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Math.random().toString(36).substring(2)}-${Date.now()}.${fileExt}`;
+      const filePath = `vehicles/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('vehicles')
+        .upload(filePath, file);
+
+      if (uploadError) {
+        console.error('Error uploading photo:', uploadError.message);
+        continue;
+      }
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('vehicles')
+        .getPublicUrl(filePath);
+        
+      uploadedUrls.push(publicUrl);
+    }
+    
+    return uploadedUrls;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -121,37 +160,48 @@ const Vehicles: React.FC = () => {
     }
 
     setSaving(true);
-    const payload = {
-      plate: formData.plate.trim().toUpperCase(),
-      renavam: formData.renavam.trim() || null,
-      model: formData.model.trim(),
-      year: formData.year,
-      color: formData.color.trim() || null,
-      category: formData.category || null,
-      status: formData.status,
-      daily_rate: parseFloat(formData.daily_rate.toString()),
-    };
+    setUploading(true);
+    
+    try {
+      const photos_urls = await uploadPhotos();
+      
+      const payload = {
+        plate: formData.plate.trim().toUpperCase(),
+        renavam: formData.renavam.trim() || null,
+        model: formData.model.trim(),
+        year: formData.year,
+        color: formData.color.trim() || null,
+        category: formData.category || null,
+        status: formData.status,
+        daily_rate: parseFloat(formData.daily_rate.toString()),
+        photos_urls,
+      };
 
-    if (editingVehicle) {
-      const { error } = await supabase.from('vehicles').update(payload).eq('id', editingVehicle.id);
-      if (error) {
-        showToast('error', `Erro ao atualizar: ${error.message}`);
+      if (editingVehicle) {
+        const { error } = await supabase.from('vehicles').update(payload).eq('id', editingVehicle.id);
+        if (error) {
+          showToast('error', `Erro ao atualizar: ${error.message}`);
+        } else {
+          showToast('success', 'Veículo atualizado com sucesso!');
+          handleCloseModal();
+          fetchVehicles();
+        }
       } else {
-        showToast('success', 'Veículo atualizado com sucesso!');
-        handleCloseModal();
-        fetchVehicles();
+        const { error } = await supabase.from('vehicles').insert([payload]);
+        if (error) {
+          showToast('error', `Erro ao cadastrar: ${error.message}`);
+        } else {
+          showToast('success', 'Veículo cadastrado com sucesso!');
+          handleCloseModal();
+          fetchVehicles();
+        }
       }
-    } else {
-      const { error } = await supabase.from('vehicles').insert([payload]);
-      if (error) {
-        showToast('error', `Erro ao cadastrar: ${error.message}`);
-      } else {
-        showToast('success', 'Veículo cadastrado com sucesso!');
-        handleCloseModal();
-        fetchVehicles();
-      }
+    } catch (err: any) {
+      showToast('error', `Erro durante o envio: ${err.message}`);
+    } finally {
+      setSaving(false);
+      setUploading(false);
     }
-    setSaving(false);
   };
 
   const handleDelete = async (vehicle: Vehicle) => {
@@ -227,63 +277,103 @@ const Vehicles: React.FC = () => {
         </div>
 
         {/* Table */}
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse">
-            <thead>
-              <tr className="text-left bg-slate-50/50 border-b border-slate-100">
-                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Veículo</th>
-                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest hidden md:table-cell">Especificações</th>
-                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest hidden lg:table-cell">Status</th>
-                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Diária</th>
-                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Ações</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {loading ? (
-                <tr><td colSpan={5} className="py-24 text-center"><Loader2 className="w-10 h-10 animate-spin text-primary-500 mx-auto" /><p className="mt-4 text-slate-400 font-bold text-sm tracking-tight">Carregando frota...</p></td></tr>
-              ) : filtered.length === 0 ? (
-                <tr><td colSpan={5} className="py-24 text-center text-slate-300 font-bold">Nenhum veículo encontrado.</td></tr>
-              ) : filtered.map((vehicle) => (
-                <tr key={vehicle.id} className="hover:bg-slate-50/50 transition-all group">
-                  <td className="px-6 py-5">
-                    <div className="flex items-center gap-4">
-                      <div className="h-11 w-11 rounded-2xl bg-gradient-to-br from-primary-50 to-indigo-50 text-primary-600 flex items-center justify-center font-black shrink-0 shadow-sm group-hover:from-primary-600 group-hover:to-indigo-600 group-hover:text-white transition-all">
+        {/* Grid Layout Cards */}
+        <div className="p-4 bg-slate-50/30">
+          {loading ? (
+            <div className="py-24 text-center">
+              <Loader2 className="w-10 h-10 animate-spin text-primary-500 mx-auto" />
+              <p className="mt-4 text-slate-400 font-bold text-sm tracking-tight">Carregando frota...</p>
+            </div>
+          ) : filtered.length === 0 ? (
+            <div className="py-24 text-center text-slate-300 font-bold">Nenhum veículo encontrado.</div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {filtered.map((vehicle) => (
+                <div key={vehicle.id} className="group bg-white rounded-[32px] border border-slate-100 shadow-sm hover:shadow-2xl hover:shadow-slate-200/50 transition-all duration-500 flex flex-col overflow-hidden">
+                  {/* Image/Icon Header */}
+                  <div className="relative h-48 overflow-hidden bg-slate-100">
+                    {vehicle.photos_urls && vehicle.photos_urls.length > 0 ? (
+                      <img 
+                        src={vehicle.photos_urls[0]} 
+                        alt={vehicle.model}
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
+                      />
+                    ) : (
+                      <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 text-slate-300">
                         {
-                          vehicle.category?.toLowerCase() === 'moto' ? <Bike size={22} /> :
-                          ['caminhão', 'caminhonete', 'van/utilitário'].includes(vehicle.category?.toLowerCase() || '') ? <Truck size={22} /> :
-                          ['máquina', 'equipamento'].includes(vehicle.category?.toLowerCase() || '') ? <Settings size={22} /> :
-                          <Car size={22} />
+                          vehicle.category?.toLowerCase() === 'moto' ? <Bike size={64} strokeWidth={1} /> :
+                          ['caminhão', 'caminhonete', 'van/utilitário'].includes(vehicle.category?.toLowerCase() || '') ? <Truck size={64} strokeWidth={1} /> :
+                          <Car size={64} strokeWidth={1} />
                         }
+                        <p className="text-[10px] font-black uppercase mt-2 tracking-widest opacity-50">Sem Imagem</p>
                       </div>
+                    )}
+                    
+                    {/* Status Floating */}
+                    <div className="absolute top-4 right-4">
+                      {statusBadge(vehicle.status)}
+                    </div>
+                    
+                    {/* Category Label */}
+                    <div className="absolute bottom-4 left-4">
+                      <span className="px-3 py-1.5 bg-white/90 backdrop-blur-md rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-600 shadow-sm flex items-center gap-2">
+                        <Tag size={12} />
+                        {vehicle.category}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Info Body */}
+                  <div className="p-6 flex-1 flex flex-col">
+                    <div className="mb-4">
+                      <h4 className="text-lg font-black text-slate-900 group-hover:text-primary-600 transition-colors truncate leading-tight">
+                        {vehicle.model}
+                      </h4>
+                      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mt-1 flex items-center gap-1.5 focus-within:">
+                        <Hash size={12} className="text-primary-400" />
+                        {vehicle.plate}
+                      </p>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3 mb-6">
+                      <div className="bg-slate-50 p-2.5 rounded-2xl flex flex-col">
+                        <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-0.5">Ano</span>
+                        <span className="text-xs font-bold text-slate-700">{vehicle.year}</span>
+                      </div>
+                      <div className="bg-slate-50 p-2.5 rounded-2xl flex flex-col">
+                        <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-0.5">Cor</span>
+                        <span className="text-xs font-bold text-slate-700 truncate">{vehicle.color}</span>
+                      </div>
+                    </div>
+
+                    <div className="mt-auto pt-4 border-t border-slate-50 flex items-center justify-between">
                       <div>
-                        <p className="font-bold text-slate-900 group-hover:text-primary-600 transition-colors tracking-tight">{vehicle.model}</p>
-                        <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mt-0.5">{vehicle.plate}</p>
+                        <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-0.5">Diária</p>
+                        <p className="text-lg font-black text-primary-600">
+                          <span className="text-xs mr-0.5">R$</span>
+                          {Number(vehicle.daily_rate).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        </p>
+                      </div>
+                      <div className="flex gap-1">
+                        <button 
+                          onClick={() => handleOpenModal(vehicle)}
+                          className="p-2.5 text-slate-400 hover:text-primary-600 hover:bg-primary-50 rounded-xl transition-all active:scale-90"
+                        >
+                          <Edit2 size={18} />
+                        </button>
+                        <button 
+                          onClick={() => handleDelete(vehicle)}
+                          className="p-2.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all active:scale-90"
+                        >
+                          <Trash2 size={18} />
+                        </button>
                       </div>
                     </div>
-                  </td>
-                  <td className="px-6 py-5 hidden md:table-cell">
-                    <div className="flex flex-wrap gap-2">
-                       <span className="flex items-center gap-1.5 px-2.5 py-1 bg-slate-100/80 text-slate-600 rounded-lg text-[10px] font-black uppercase"><Tag size={12} /> {vehicle.category}</span>
-                       <span className="flex items-center gap-1.5 px-2.5 py-1 bg-slate-100/80 text-slate-600 rounded-lg text-[10px] font-black uppercase"><Hash size={12} /> {vehicle.year}</span>
-                       <span className="flex items-center gap-1.5 px-2.5 py-1 bg-slate-100/80 text-slate-600 rounded-lg text-[10px] font-black uppercase"><Palette size={12} /> {vehicle.color}</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-5 hidden lg:table-cell">
-                    {statusBadge(vehicle.status)}
-                  </td>
-                  <td className="px-6 py-5 text-right font-black text-slate-900 text-sm">
-                    R$ {Number(vehicle.daily_rate).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                  </td>
-                  <td className="px-6 py-5 text-right">
-                    <div className="flex justify-end gap-2 shrink-0">
-                      <button onClick={() => handleOpenModal(vehicle)} className="p-2.5 text-slate-400 hover:text-primary-600 hover:bg-white hover:shadow-md hover:scale-110 rounded-xl transition-all"><Edit2 size={16} /></button>
-                      <button onClick={() => handleDelete(vehicle)} className="p-2.5 text-slate-400 hover:text-red-600 hover:bg-white hover:shadow-md hover:scale-110 rounded-xl transition-all"><Trash2 size={16} /></button>
-                    </div>
-                  </td>
-                </tr>
+                  </div>
+                </div>
               ))}
-            </tbody>
-          </table>
+            </div>
+          )}
         </div>
       </div>
 
@@ -309,6 +399,68 @@ const Vehicles: React.FC = () => {
               <div className="p-6 sm:p-10 space-y-10">
                 {/* Dados principais */}
                 <div className="space-y-6">
+                  <div className="flex items-center gap-3">
+                     <div className="h-2 w-2 rounded-full bg-primary-500 shadow-lg shadow-primary-500/50" />
+                    <h4 className="text-sm font-black text-slate-900 uppercase tracking-widest">Mídia & Fotos</h4>
+                  </div>
+                  
+                  {/* Photo Upload Section */}
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                      {/* Current Photos */}
+                      {formData.photos_urls?.map((url, idx) => (
+                        <div key={idx} className="relative aspect-square rounded-[24px] overflow-hidden group border border-slate-100">
+                          <img src={url} className="w-full h-full object-cover" />
+                          <button 
+                            type="button" 
+                            onClick={() => setFormData({ ...formData, photos_urls: formData.photos_urls?.filter((_, i) => i !== idx) || [] })}
+                            className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <X size={14} />
+                          </button>
+                        </div>
+                      ))}
+                      
+                      {/* New Files to Upload */}
+                      {newPhotos.map((file, idx) => (
+                        <div key={idx} className="relative aspect-square rounded-[24px] border-2 border-dashed border-primary-200 bg-primary-50/30 overflow-hidden group">
+                          <img src={URL.createObjectURL(file)} className="w-full h-full object-cover opacity-60" />
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <Upload size={20} className="text-primary-500 animate-bounce" />
+                          </div>
+                          <button 
+                            type="button" 
+                            onClick={() => setNewPhotos(newPhotos.filter((_, i) => i !== idx))}
+                            className="absolute top-2 right-2 p-1.5 bg-slate-800 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <X size={14} />
+                          </button>
+                        </div>
+                      ))}
+
+                      {/* Add Button */}
+                      {(formData.photos_urls?.length || 0) + newPhotos.length < 4 && (
+                        <label className="aspect-square rounded-[24px] border-2 border-dashed border-slate-200 hover:border-primary-500 hover:bg-primary-50 transition-all cursor-pointer flex flex-col items-center justify-center gap-2 group">
+                          <input 
+                            type="file" 
+                            className="hidden" 
+                            multiple 
+                            accept="image/*"
+                            onChange={(e) => {
+                              const files = Array.from(e.target.files || []);
+                              setNewPhotos([...newPhotos, ...files]);
+                            }}
+                          />
+                          <div className="h-10 w-10 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-primary-100 group-hover:text-primary-600 transition-all">
+                             <Camera size={20} />
+                          </div>
+                          <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 group-hover:text-primary-600">Adicionar</span>
+                        </label>
+                      )}
+                    </div>
+                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider ml-1">Máximo 4 fotos. Formatos suportados: JPG, PNG, WEBP.</p>
+                  </div>
+
                   <div className="flex items-center gap-3">
                      <div className="h-2 w-2 rounded-full bg-primary-500 shadow-lg shadow-primary-500/50" />
                     <h4 className="text-sm font-black text-slate-900 uppercase tracking-widest">Identificação</h4>
@@ -420,8 +572,13 @@ const Vehicles: React.FC = () => {
               {/* Footer */}
               <div className="p-6 sm:p-10 border-t border-slate-100 flex flex-col sm:flex-row justify-end gap-4 bg-slate-50/30 shrink-0">
                 <button type="button" onClick={handleCloseModal} className="btn-secondary w-full sm:w-auto h-14 sm:px-8 font-black uppercase text-xs tracking-widest border-none hover:bg-slate-200 transition-all">Cancelar</button>
-                <button type="submit" disabled={saving} className="btn-primary w-full sm:w-auto h-14 sm:px-10 font-black uppercase text-xs tracking-widest shadow-xl shadow-primary-500/30 active:scale-95 transition-all">
-                  {saving ? <Loader2 size={18} className="animate-spin" /> : <><Save size={18} /> Salvar Veículo</>}
+                <button type="submit" disabled={saving || uploading} className="btn-primary w-full sm:w-auto h-14 sm:px-10 font-black uppercase text-xs tracking-widest shadow-xl shadow-primary-500/30 active:scale-95 transition-all">
+                  {saving || uploading ? (
+                    <div className="flex items-center gap-2">
+                       <Loader2 size={18} className="animate-spin" />
+                       {uploading ? 'Enviando Fotos...' : 'Salvando...'}
+                    </div>
+                  ) : <><Save size={18} /> Salvar Veículo</>}
                 </button>
               </div>
             </form>
