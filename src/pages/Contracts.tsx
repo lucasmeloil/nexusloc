@@ -6,7 +6,7 @@ import {
   AlertCircle, CheckCircle2, AlertTriangle, Receipt, Printer,
   ShoppingCart, Eye, BadgeCheck, Send, CreditCard, Plus,
 } from 'lucide-react';
-import { format, addDays, addMonths, differenceInDays, parseISO, isPast, isToday } from 'date-fns';
+import { format, addDays, addWeeks, addMonths, differenceInDays, parseISO, isPast, isToday } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { generateContractPDF } from '../lib/contractPDF';
 import { generateSaleContractPDF } from '../lib/saleContractPDF';
@@ -235,8 +235,7 @@ const Contracts: React.FC = () => {
         await supabase.from('vehicles').update({ status: 'in_sale' }).eq('id', saleForm.vehicle_id);
 
         const insts = Array.from({ length: saleForm.installments }, (_, i) => {
-          const d = addMonths(new Date(), i + 1);
-          d.setDate(saleForm.due_day);
+          const d = addWeeks(new Date(), i + 1);
           return { sale_contract_id: nc.id, installment_number: i + 1, due_date: format(d, 'yyyy-MM-dd'), amount: parseFloat(instValue.toFixed(2)), paid_at: null, paid_amount: null, receipt_sent: false, whatsapp_sent: false, status: (isPast(d) && !isToday(d)) ? 'overdue' : 'pending', notes: null };
         });
         await supabase.from('sale_installments').insert(insts);
@@ -645,13 +644,10 @@ const Contracts: React.FC = () => {
                   <input type="number" step="0.01" min="0" value={saleForm.down_payment || ''} onChange={e => setSaleForm({ ...saleForm, down_payment: parseFloat(e.target.value) || 0 })} className="input-field" />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-sm font-semibold text-slate-700">Nº de Parcelas (1–36)</label>
-                  <input type="number" min="1" max="36" required value={saleForm.installments} onChange={e => setSaleForm({ ...saleForm, installments: parseInt(e.target.value) || 1 })} className="input-field" />
+                  <label className="text-sm font-semibold text-slate-700">Nº de Parcelas (1–150)</label>
+                  <input type="number" min="1" max="150" required value={saleForm.installments} onChange={e => setSaleForm({ ...saleForm, installments: parseInt(e.target.value) || 1 })} className="input-field" />
                 </div>
-                <div className="space-y-1.5">
-                  <label className="text-sm font-semibold text-slate-700">Dia do Vencimento</label>
-                  <input type="number" min="1" max="28" required value={saleForm.due_day} onChange={e => setSaleForm({ ...saleForm, due_day: parseInt(e.target.value) || 10 })} className="input-field" />
-                </div>
+
                 <div className="space-y-1.5 sm:col-span-2">
                   <label className="text-sm font-semibold text-slate-700">Observações</label>
                   <textarea value={saleForm.notes} onChange={e => setSaleForm({ ...saleForm, notes: e.target.value })} className="input-field min-h-[60px]" placeholder="Condições especiais..." />

@@ -7,7 +7,7 @@ import {
   Bell, TrendingUp, Clock, DollarSign, AlertTriangle, FileText,
   CalendarDays, CreditCard, BadgeCheck, Send, RotateCcw,
 } from 'lucide-react';
-import { format, addMonths, parseISO, isPast, isToday } from 'date-fns';
+import { format, addWeeks, parseISO, isPast, isToday } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 // ── helpers ────────────────────────────────────────────────────────────────
@@ -141,8 +141,8 @@ const RentalSale: React.FC = () => {
       else {
         // generate installments
         const installments = Array.from({ length: form.installments }, (_, i) => {
-          const base = addMonths(new Date(), i + 1);
-          base.setDate(form.due_day);
+          const base = addWeeks(new Date(), i + 1);
+          // O dia do vencimento agora é exatamente X semanas a partir de hoje
           const dueDate = format(base, 'yyyy-MM-dd');
           const status = (isPast(base) && !isToday(base)) ? 'overdue' : 'pending';
           return {
@@ -283,7 +283,7 @@ const RentalSale: React.FC = () => {
             </div>
             <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">Aluguel com Intenção de Venda</h2>
           </div>
-          <p className="text-slate-500 ml-1">Contratos parcelados em até 36x com gestão completa de recibos e notificações.</p>
+          <p className="text-slate-500 ml-1">Contratos parcelados em até 150x com gestão completa de recibos e notificações.</p>
         </div>
         <button onClick={() => handleOpenModal()} className="btn-primary w-full sm:w-auto shadow-xl shadow-violet-500/20 bg-violet-600 hover:bg-violet-700">
           <Plus size={18} /> Novo Contrato
@@ -683,14 +683,10 @@ const RentalSale: React.FC = () => {
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-sm font-semibold text-slate-700">Parcelas (1-36) *</label>
-                  <input type="number" min="1" max="36" required value={form.installments} onChange={e => setForm({ ...form, installments: parseInt(e.target.value) || 1 })} className="input-field" />
+                  <label className="text-sm font-semibold text-slate-700">Parcelas (1-150) *</label>
+                  <input type="number" min="1" max="150" required value={form.installments} onChange={e => setForm({ ...form, installments: parseInt(e.target.value) || 1 })} className="input-field" />
                 </div>
 
-                <div className="space-y-1.5">
-                  <label className="text-sm font-semibold text-slate-700">Dia do Vencimento</label>
-                  <input type="number" min="1" max="28" required value={form.due_day} onChange={e => setForm({ ...form, due_day: parseInt(e.target.value) || 10 })} className="input-field" />
-                </div>
 
                 <div className="space-y-1.5 sm:col-span-2">
                   <label className="text-sm font-semibold text-slate-700">Observações</label>
