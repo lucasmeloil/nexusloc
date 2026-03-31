@@ -427,9 +427,11 @@ const Dashboard: React.FC = () => {
             </div>
           )}
         </div>
+        {/* End of Left Column */}
+        </div>
 
-        {/* Top Clients */}
-        <div className="card">
+        {/* Top Clients - Right Column */}
+        <div className="card h-fit sticky top-8">
           <h3 className="text-xl font-bold text-slate-900 mb-6">Top Clientes</h3>
 
           {loading ? (
@@ -466,7 +468,6 @@ const Dashboard: React.FC = () => {
               ))}
             </div>
           )}
-        </div>
         </div>
       </div>
     </div>
