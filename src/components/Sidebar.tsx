@@ -21,7 +21,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, logoUrl = '/logo.png' })
   const { signOut } = useAuth();
 
   const menuItems = [
-    { icon: LayoutDashboard, label: 'Dashboard', path: '/' },
+    { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
     { icon: Users, label: 'Clientes', path: '/clientes' },
     { icon: Car, label: 'Veículos', path: '/veiculos' },
     { icon: FileText, label: 'Contratos', path: '/contratos' },

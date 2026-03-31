@@ -23,6 +23,7 @@ import {
   CreditCard,
   UserPlus,
   Clock,
+  LogOut,
 } from 'lucide-react';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -38,7 +39,7 @@ interface Notification {
 }
 
 const menuItems = [
-  { icon: LayoutDashboard, label: 'Dashboard', path: '/' },
+  { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
   { icon: Users, label: 'Clientes', path: '/clientes' },
   { icon: Car, label: 'Veículos', path: '/veiculos' },
   { icon: FileText, label: 'Contratos', path: '/contratos' },
@@ -110,6 +111,10 @@ const Layout: React.FC = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loadingNotifs, setLoadingNotifs] = useState(false);
   const readIds = useRef<Set<string>>(getStoredRead());
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+  };
 
   // ── Fetch real notifications from Supabase ──────────────────────────────
   const fetchNotifications = useCallback(async () => {
@@ -344,7 +349,6 @@ const Layout: React.FC = () => {
     );
   }
   if (!user && location.pathname !== '/login') return <Navigate to="/login" replace />;
-  if (user && location.pathname === '/login') return <Navigate to="/" replace />;
   if (!user) return <Outlet />;
 
   // ── Render ───────────────────────────────────────────────────────────────
@@ -513,6 +517,7 @@ const Layout: React.FC = () => {
               <NavLink
                 key={item.path}
                 to={item.path}
+                onClick={() => setIsMobileMenuOpen(false)}
                 className={({ isActive }) =>
                   `flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-bold ${isActive
                     ? 'bg-primary-50 text-primary-600 border border-primary-100'
@@ -524,6 +529,17 @@ const Layout: React.FC = () => {
                 <span>{item.label}</span>
               </NavLink>
             ))}
+            
+            <button
+              onClick={() => {
+                setIsMobileMenuOpen(false);
+                handleLogout();
+              }}
+              className="mt-4 flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-bold text-red-500 hover:bg-red-50 border border-transparent"
+            >
+              <LogOut className="w-5 h-5 flex-shrink-0" />
+              <span>Sair do Sistema</span>
+            </button>
           </nav>
         </div>
 

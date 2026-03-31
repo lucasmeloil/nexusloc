@@ -11,15 +11,17 @@ import Billing from './pages/Billing';
 
 import Reports from './pages/Reports';
 import Settings from './pages/Settings';
+import LandingPage from './pages/LandingPage';
 
 const App: React.FC = () => {
   return (
     <Router>
       <AuthProvider>
         <Routes>
+          <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<Login />} />
           <Route element={<Layout />}>
-            <Route path="/" element={<Dashboard />} />
+            <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/clientes" element={<Clients />} />
             <Route path="/veiculos" element={<Vehicles />} />
             <Route path="/contratos" element={<Contracts />} />

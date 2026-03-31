@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Navigate, Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { Mail, Lock, LogIn } from 'lucide-react';
+import { Mail, Lock, LogIn, ArrowLeft } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 const logo = '/logo.png';
 
 const Login: React.FC = () => {
@@ -10,7 +11,12 @@ const Login: React.FC = () => {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { user } = useAuth();
 
+  // Se o usuário já estiver logado, envia para o dashboard
+  if (user) {
+    return <Navigate to="/dashboard" replace />;
+  }
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -26,7 +32,7 @@ const Login: React.FC = () => {
       setLoading(false);
     } else {
       // Login bem-sucedido — redireciona para o dashboard
-      navigate('/', { replace: true });
+      navigate('/dashboard', { replace: true });
     }
   };
 
@@ -43,7 +49,19 @@ const Login: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 px-4">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 px-4 relative">
+      
+      {/* Botão de Voltar ao site */}
+      <div className="absolute top-6 left-6 md:top-12 md:left-12">
+        <Link 
+          to="/" 
+          className="flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-indigo-600 bg-white/50 backdrop-blur-md px-4 py-3 rounded-2xl border border-slate-200/60 shadow-sm hover:shadow-md transition-all active:scale-95"
+        >
+          <ArrowLeft size={16} />
+          <span>Voltar ao site</span>
+        </Link>
+      </div>
+
       <div className="w-full max-w-md">
         <div className="flex justify-center mb-8">
           <img src={logo} alt="NexusLoc Logo" className="h-20 object-contain" />
