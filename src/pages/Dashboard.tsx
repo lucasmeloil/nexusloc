@@ -10,6 +10,9 @@ import {
   Loader2,
   ShoppingCart,
   Tag,
+  AlertTriangle,
+  Send,
+  BellRing,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { StatCard } from '../components/StatCard';
@@ -53,6 +56,19 @@ interface TopClient {
   totalSpent: number;
 }
 
+interface InstallmentAlert {
+  id: string;
+  installment_number: number;
+  due_date: string;
+  amount: number;
+  status: 'pending' | 'overdue';
+  contract_id: string;
+  client_name: string;
+  client_phone: string;
+  vehicle_model: string;
+  vehicle_plate: string;
+}
+
 // ── Helpers ────────────────────────────────────────────────────────────────
 const rentalBadge = (s: string) => {
   if (s === 'active')   return { text: 'Locação Ativa',     cls: 'bg-blue-100 text-blue-700' };
@@ -79,13 +95,14 @@ const Dashboard: React.FC = () => {
   });
   const [recentActivity, setRecentActivity] = useState<ActivityRow[]>([]);
   const [topClients, setTopClients] = useState<TopClient[]>([]);
+  const [alerts, setAlerts] = useState<InstallmentAlert[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchAll = async () => {
       setLoading(true);
 
-      const [vehiclesRes, contractsRes, saleRes] = await Promise.all([
+      const [vehiclesRes, contractsRes, saleRes, alertsRes] = await Promise.all([
         supabase.from('vehicles').select('status'),
         supabase
           .from('contracts')
@@ -95,7 +112,30 @@ const Dashboard: React.FC = () => {
           .from('sale_contracts')
           .select('id, created_at, sale_price, down_payment, installments, status, client:clients(id, name), vehicle:vehicles(model, plate), installment_records:sale_installments(status, amount, paid_amount)')
           .order('created_at', { ascending: false }),
+        supabase
+          .from('sale_installments')
+          .select('id, installment_number, due_date, amount, status, sale_contract_id, contract:sale_contracts(client:clients(name, phone), vehicle:vehicles(model, plate))')
+          .in('status', ['pending', 'overdue'])
+          .lte('due_date', format(new Date(), 'yyyy-MM-dd'))
+          .order('due_date', { ascending: true })
       ]);
+
+      // ── Alertas (Hoje / Atrasados) ───────────────────────────────────
+      if (alertsRes.data) {
+        const parsedAlerts = (alertsRes.data as any[]).map(a => ({
+          id: a.id,
+          installment_number: a.installment_number,
+          due_date: a.due_date,
+          amount: Number(a.amount) || 0,
+          status: a.status,
+          contract_id: a.sale_contract_id,
+          client_name: a.contract?.client?.name || '—',
+          client_phone: a.contract?.client?.phone || '',
+          vehicle_model: a.contract?.vehicle?.model || '—',
+          vehicle_plate: a.contract?.vehicle?.plate || ''
+        }));
+        setAlerts(parsedAlerts);
+      }
 
       // ── Vehicle stats ────────────────────────────────────────────────
       if (vehiclesRes.data) {
@@ -231,9 +271,90 @@ const Dashboard: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Unified Activity Feed */}
-        <div className="lg:col-span-2 card">
-          <div className="flex justify-between items-center mb-6">
+        <div className="lg:col-span-2 space-y-8">
+          
+          {/* Alertas de Cobrança (Painel Específico) */}
+          <div className={`card ${alerts.length > 0 ? 'border-l-4 border-l-red-500 shadow-xl shadow-red-500/10' : 'border-l-4 border-l-emerald-500'}`}>
+            <div className="flex justify-between items-center mb-6">
+              <div className="flex items-center gap-3">
+                <div className={`p-2 rounded-xl ${alerts.length > 0 ? 'bg-red-100/50 text-red-600' : 'bg-emerald-100/50 text-emerald-600'}`}>
+                  {alerts.length > 0 ? <BellRing size={22} className="animate-pulse" /> : <CircleCheck size={22} />}
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-slate-900">Painel de Cobranças</h3>
+                  <p className="text-xs text-slate-400 font-bold uppercase mt-0.5">
+                    Monitoramento Diário de Locação c/ Intenção de Venda
+                  </p>
+                </div>
+              </div>
+              <a href="/contratos" className="btn-secondary text-sm font-semibold gap-2">
+                <FileText size={16} /> Ver Todos
+              </a>
+            </div>
+
+            {alerts.length === 0 ? (
+              <div className="py-12 text-center flex flex-col items-center justify-center bg-gradient-to-br from-slate-50 to-white border border-slate-100/50 rounded-2xl shadow-sm">
+                <div className="w-16 h-16 rounded-full bg-emerald-100/60 flex items-center justify-center mb-4 shadow-inner">
+                  <CircleCheck size={32} className="text-emerald-500" />
+                </div>
+                <h4 className="text-lg font-extrabold text-slate-900">Cobranças em Dia!</h4>
+                <p className="text-sm text-slate-500 mt-1 max-w-sm mx-auto">
+                  Sua carteira de recebíveis deste segmento está positiva. Não há parcelas vencendo na data de hoje nem saldos em atraso.
+                </p>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {alerts.slice(0, 6).map(alert => {
+                    const isToday = alert.due_date === format(new Date(), 'yyyy-MM-dd');
+                    const statusColor = isToday ? 'text-amber-600 bg-amber-50 border-amber-200' : 'text-red-600 bg-red-50 border-red-200';
+                    
+                    return (
+                      <div key={alert.id} className={`p-4 rounded-2xl border ${statusColor} flex flex-col justify-between gap-3`}>
+                        <div>
+                          <div className="flex justify-between items-start mb-2">
+                            <span className={`px-2 py-0.5 rounded-md text-[10px] font-black uppercase ${isToday ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700'}`}>
+                              {isToday ? 'Vence Hoje' : 'Em Atraso'}
+                            </span>
+                            <span className="text-[10px] font-black opacity-60">
+                              {format(new Date(alert.due_date), 'dd/MM/yyyy')}
+                            </span>
+                          </div>
+                          <p className="font-bold text-sm truncate" title={alert.client_name}>{alert.client_name}</p>
+                          <p className="text-xs font-semibold opacity-70 truncate">{alert.vehicle_model} {alert.vehicle_plate}</p>
+                        </div>
+                        
+                        <div className="flex items-end justify-between mt-1">
+                          <div>
+                            <p className="text-[9px] font-black uppercase tracking-widest opacity-60">Parcela {alert.installment_number}</p>
+                            <p className="text-lg font-black">{alert.amount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
+                          </div>
+                          <button
+                            onClick={() => {
+                              const phone = alert.client_phone?.replace(/\D/g, '');
+                              const msg = `Olá ${alert.client_name}! 👋\n\nEste é um lembrete de que sua parcela ${alert.installment_number} de ${alert.amount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} referente ao veículo ${alert.vehicle_model} está ${isToday ? 'vencendo hoje' : 'em atraso'}.\n\nPara pagamentos via Pix ou dúvidas, estamos à disposição!\n\nNexusLoc`;
+                              window.open(`https://wa.me/55${phone}?text=${encodeURIComponent(msg)}`, '_blank');
+                            }}
+                            className="p-2 bg-white/50 hover:bg-white rounded-xl shadow-sm transition-colors text-emerald-600"
+                            title="Enviar Lembrete WhatsApp"
+                          >
+                            <Send size={16} />
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                {alerts.length > 6 && (
+                  <p className="text-center text-xs text-slate-400 font-bold mt-2 uppercase">E mais {alerts.length - 6} parcelas pendentes (veja no painel de Vendas)</p>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Unified Activity Feed */}
+          <div className="card">
+            <div className="flex justify-between items-center mb-6">
             <div>
               <h3 className="text-xl font-bold text-slate-900">Movimentações Recentes</h3>
               <p className="text-xs text-slate-400 mt-0.5 font-semibold">Locações + contratos c/ intenção de venda</p>
@@ -345,6 +466,7 @@ const Dashboard: React.FC = () => {
               ))}
             </div>
           )}
+        </div>
         </div>
       </div>
     </div>
