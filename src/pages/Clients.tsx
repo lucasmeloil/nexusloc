@@ -96,6 +96,7 @@ const Clients: React.FC = () => {
       address: formData.address.trim() || null,
       phone: formData.phone.trim() || null,
       email: formData.email.trim() || null,
+      created_at: new Date().toISOString(),
     };
 
     if (editingClient) {

@@ -1,5 +1,6 @@
-export type VehicleStatus = 'available' | 'rented' | 'maintenance';
+export type VehicleStatus = 'available' | 'rented' | 'maintenance' | 'in_sale';
 export type ContractStatus = 'active' | 'finished' | 'cancelled';
+export type SaleContractStatus = 'active' | 'paid' | 'overdue' | 'cancelled';
 
 export interface Profile {
   id: string;
@@ -34,6 +35,7 @@ export interface Vehicle {
   status: VehicleStatus;
   daily_rate: number;
   photos_urls: string[] | null;
+  sale_price?: number | null;
 }
 
 export interface Contract {
@@ -75,4 +77,38 @@ export interface SystemSettings {
   daily_rental_start_time: string;
   daily_rental_end_time: string;
   contract_clauses: string[];
+}
+
+// ── Rental-to-Sale Module ───────────────────────────────────────────────────
+
+export interface SaleContract {
+  id: string;
+  created_at: string;
+  client_id: string;
+  vehicle_id: string;
+  sale_price: number;
+  down_payment: number;
+  installments: number;          // 1–36
+  installment_value: number;
+  due_day: number;               // day-of-month for monthly invoices
+  status: SaleContractStatus;
+  notes: string | null;
+  client?: Client;
+  vehicle?: Vehicle;
+  installment_records?: SaleInstallment[];
+}
+
+export interface SaleInstallment {
+  id: string;
+  created_at: string;
+  sale_contract_id: string;
+  installment_number: number;
+  due_date: string;
+  amount: number;
+  paid_at: string | null;
+  paid_amount: number | null;
+  receipt_sent: boolean;
+  whatsapp_sent: boolean;
+  status: 'pending' | 'paid' | 'overdue';
+  notes: string | null;
 }

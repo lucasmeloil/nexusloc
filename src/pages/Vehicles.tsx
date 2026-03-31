@@ -216,12 +216,14 @@ const Vehicles: React.FC = () => {
   };
 
   const statusBadge = (status: Vehicle['status']) => {
-    const config = {
-      available: { text: 'Disponível', icon: CircleCheck, cls: 'bg-emerald-50 text-emerald-600 border-emerald-100' },
-      rented: { text: 'Alugado', icon: Clock, cls: 'bg-blue-50 text-blue-600 border-blue-100' },
-      maintenance: { text: 'Manutenção', icon: Settings, cls: 'bg-amber-50 text-amber-600 border-amber-100' },
+    const config: Record<string, { text: string; icon: React.FC<{ size?: number }>; cls: string }> = {
+      available:   { text: 'Disponível',    icon: CircleCheck, cls: 'bg-emerald-50 text-emerald-600 border-emerald-100' },
+      rented:      { text: 'Alugado',       icon: Clock,       cls: 'bg-blue-50 text-blue-600 border-blue-100' },
+      maintenance: { text: 'Manutenção',    icon: Settings,    cls: 'bg-amber-50 text-amber-600 border-amber-100' },
+      in_sale:     { text: 'Em Venda',      icon: Tag,         cls: 'bg-violet-50 text-violet-600 border-violet-100' },
     };
-    const { text, icon: Icon, cls } = config[status];
+    const entry = config[status] ?? { text: status, icon: CircleCheck, cls: 'bg-slate-50 text-slate-500 border-slate-100' };
+    const { text, icon: Icon, cls } = entry;
     return (
       <span className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 border ${cls}`}>
         <Icon size={12} />

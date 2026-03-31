@@ -8,15 +8,42 @@ import {
   ChevronRight,
   FileText,
   Loader2,
+  ShoppingCart,
+  Tag,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { StatCard } from '../components/StatCard';
 import { format } from 'date-fns';
 import type { Contract, Client, Vehicle } from '../types';
 
+// ── Types ──────────────────────────────────────────────────────────────────
 interface ContractWithRelations extends Omit<Contract, 'vehicle'> {
   client: Client;
   vehicle: Pick<Vehicle, 'model' | 'plate'>;
+}
+
+interface SaleContractRow {
+  id: string;
+  created_at: string;
+  sale_price: number;
+  down_payment: number;
+  installments: number;
+  status: string;
+  client: { id: string; name: string } | null;
+  vehicle: { model: string; plate: string } | null;
+  installment_records?: { status: string; amount: number; paid_amount: number | null }[];
+}
+
+// Unified activity row shown in the table
+interface ActivityRow {
+  id: string;
+  created_at: string;
+  type: 'rental' | 'sale';
+  client_name: string;
+  vehicle_model: string;
+  vehicle_plate: string;
+  status: string;
+  value: number;
 }
 
 interface TopClient {
@@ -26,14 +53,31 @@ interface TopClient {
   totalSpent: number;
 }
 
+// ── Helpers ────────────────────────────────────────────────────────────────
+const rentalBadge = (s: string) => {
+  if (s === 'active')   return { text: 'Locação Ativa',     cls: 'bg-blue-100 text-blue-700' };
+  if (s === 'finished') return { text: 'Finalizada',         cls: 'bg-slate-100 text-slate-500' };
+  return                       { text: 'Cancelada',          cls: 'bg-red-100 text-red-600' };
+};
+
+const saleBadge = (s: string) => {
+  if (s === 'active')  return { text: 'Venda Ativa',  cls: 'bg-violet-100 text-violet-700' };
+  if (s === 'paid')    return { text: 'Venda Quitada', cls: 'bg-emerald-100 text-emerald-700' };
+  if (s === 'overdue') return { text: 'Venda Atrasada', cls: 'bg-orange-100 text-orange-700' };
+  return                      { text: 'Cancelada',      cls: 'bg-red-100 text-red-600' };
+};
+
+// ═══════════════════════════════════════════════════════════════════════════
 const Dashboard: React.FC = () => {
   const [stats, setStats] = useState({
     availableVehicles: 0,
     rentedVehicles: 0,
+    inSaleVehicles: 0,
     monthlyRevenue: 0,
     pendingPayments: 0,
+    saleRevenue: 0,
   });
-  const [recentContracts, setRecentContracts] = useState<ContractWithRelations[]>([]);
+  const [recentActivity, setRecentActivity] = useState<ActivityRow[]>([]);
   const [topClients, setTopClients] = useState<TopClient[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -41,24 +85,40 @@ const Dashboard: React.FC = () => {
     const fetchAll = async () => {
       setLoading(true);
 
-      const [vehiclesRes, contractsRes] = await Promise.all([
+      const [vehiclesRes, contractsRes, saleRes] = await Promise.all([
         supabase.from('vehicles').select('status'),
         supabase
           .from('contracts')
           .select('*, client:clients(*), vehicle:vehicles(model, plate)')
           .order('created_at', { ascending: false }),
+        supabase
+          .from('sale_contracts')
+          .select('id, created_at, sale_price, down_payment, installments, status, client:clients(id, name), vehicle:vehicles(model, plate), installment_records:sale_installments(status, amount, paid_amount)')
+          .order('created_at', { ascending: false }),
       ]);
 
-      // Stats - vehicles
+      // ── Vehicle stats ────────────────────────────────────────────────
       if (vehiclesRes.data) {
         setStats(prev => ({
           ...prev,
           availableVehicles: vehiclesRes.data.filter(v => v.status === 'available').length,
-          rentedVehicles: vehiclesRes.data.filter(v => v.status === 'rented').length,
+          rentedVehicles:    vehiclesRes.data.filter(v => v.status === 'rented').length,
+          inSaleVehicles:    vehiclesRes.data.filter(v => v.status === 'in_sale').length,
         }));
       }
 
-      // Stats + recent + top clients from contracts
+      // ── Sale contracts revenue ───────────────────────────────────────
+      if (saleRes.data) {
+        const saleRevenue = (saleRes.data as unknown as SaleContractRow[]).reduce((acc, sc) => {
+          const paid = (sc.installment_records ?? [])
+            .filter(i => i.status === 'paid')
+            .reduce((s, i) => s + (Number(i.paid_amount ?? i.amount) || 0), 0);
+          return acc + Number(sc.down_payment) + paid;
+        }, 0);
+        setStats(prev => ({ ...prev, saleRevenue }));
+      }
+
+      // ── Rental contracts stats + top clients ─────────────────────────
       if (contractsRes.data) {
         const allContracts = contractsRes.data as ContractWithRelations[];
 
@@ -72,42 +132,68 @@ const Dashboard: React.FC = () => {
 
         setStats(prev => ({ ...prev, monthlyRevenue: revenue, pendingPayments: pending }));
 
-        // 5 most recent
-        setRecentContracts(allContracts.slice(0, 5));
-
-        // Top clients: aggregate by client_id
+        // Top clients from rental
         const clientMap: Record<string, { name: string; count: number; total: number }> = {};
         for (const c of allContracts) {
           if (!c.client_id || !c.client) continue;
-          if (!clientMap[c.client_id]) {
-            clientMap[c.client_id] = { name: c.client.name, count: 0, total: 0 };
-          }
+          if (!clientMap[c.client_id]) clientMap[c.client_id] = { name: c.client.name, count: 0, total: 0 };
           clientMap[c.client_id].count += 1;
           clientMap[c.client_id].total += Number(c.total_value) || 0;
         }
-
+        // Add sale contracts to top clients
+        if (saleRes.data) {
+          for (const sc of (saleRes.data as unknown as SaleContractRow[])) {
+            if (!sc.client?.id) continue;
+            if (!clientMap[sc.client.id]) clientMap[sc.client.id] = { name: sc.client.name, count: 0, total: 0 };
+            clientMap[sc.client.id].count += 1;
+            clientMap[sc.client.id].total += Number(sc.sale_price) || 0;
+          }
+        }
         const ranked: TopClient[] = Object.entries(clientMap)
           .map(([id, v]) => ({ id, name: v.name, contractCount: v.count, totalSpent: v.total }))
           .sort((a, b) => b.totalSpent - a.totalSpent)
           .slice(0, 5);
-
         setTopClients(ranked);
       }
 
+      // ── Unified activity feed (rental + sale, sorted by date, top 8) ─
+      const rentalRows: ActivityRow[] = ((contractsRes.data ?? []) as ContractWithRelations[]).map(c => ({
+        id: c.id,
+        created_at: c.created_at,
+        type: 'rental',
+        client_name:   c.client?.name ?? '—',
+        vehicle_model: c.vehicle?.model ?? '—',
+        vehicle_plate: c.vehicle?.plate ?? '',
+        status: c.status,
+        value: Number(c.total_value) || 0,
+      }));
+
+      const saleRows: ActivityRow[] = ((saleRes.data ?? []) as unknown as SaleContractRow[]).map(sc => ({
+        id: sc.id,
+        created_at: sc.created_at,
+        type: 'sale',
+        client_name:   sc.client?.name ?? '—',
+        vehicle_model: sc.vehicle?.model ?? '—',
+        vehicle_plate: sc.vehicle?.plate ?? '',
+        status: sc.status,
+        value: Number(sc.sale_price) || 0,
+      }));
+
+      const combined = [...rentalRows, ...saleRows]
+        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+        .slice(0, 8);
+
+      setRecentActivity(combined);
       setLoading(false);
     };
 
     fetchAll();
   }, []);
 
-  const statusLabel = (status: string) => {
-    if (status === 'active') return { text: 'Ativo', cls: 'bg-emerald-100 text-emerald-700' };
-    if (status === 'finished') return { text: 'Finalizado', cls: 'bg-slate-100 text-slate-500' };
-    return { text: 'Cancelado', cls: 'bg-red-100 text-red-600' };
-  };
-
+  // ── Render ─────────────────────────────────────────────────────────────
   return (
     <div className="space-y-10 fade-in">
+      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4">
         <div>
           <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">Dashboard</h2>
@@ -122,33 +208,20 @@ const Dashboard: React.FC = () => {
       </div>
 
       {/* Stat Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard
-          title="Veículos Disponíveis"
-          value={stats.availableVehicles.toString()}
-          icon={CircleCheck}
-          color="bg-emerald-500"
-          description="Frota pronta para locação"
-          loading={loading}
-        />
-        <StatCard
-          title="Veículos Alugados"
-          value={stats.rentedVehicles.toString()}
-          icon={Car}
-          color="bg-blue-500"
-          description="Contratos ativos no momento"
-          loading={loading}
-        />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
+        <StatCard title="Disponíveis"   value={stats.availableVehicles.toString()} icon={CircleCheck}   color="bg-emerald-500" description="Prontos para locar"              loading={loading} />
+        <StatCard title="Alugados"      value={stats.rentedVehicles.toString()}    icon={Car}           color="bg-blue-500"    description="Contratos de locação ativos"   loading={loading} />
+        <StatCard title="Em Venda"      value={stats.inSaleVehicles.toString()}    icon={ShoppingCart}  color="bg-violet-500"  description="Aluguel c/ intenção de venda"  loading={loading} />
         <StatCard
           title="Total Recebido"
-          value={`R$ ${stats.monthlyRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+          value={`R$ ${(stats.monthlyRevenue + stats.saleRevenue).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
           icon={TrendingUp}
           color="bg-primary-500"
-          description="Entradas já recebidas"
+          description="Locações + parcelas de venda"
           loading={loading}
         />
         <StatCard
-          title="Valores Pendentes"
+          title="Pendente"
           value={`R$ ${stats.pendingPayments.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
           icon={Clock}
           color="bg-amber-500"
@@ -158,10 +231,13 @@ const Dashboard: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Recent Contracts */}
+        {/* Unified Activity Feed */}
         <div className="lg:col-span-2 card">
           <div className="flex justify-between items-center mb-6">
-            <h3 className="text-xl font-bold text-slate-900">Locações Recentes</h3>
+            <div>
+              <h3 className="text-xl font-bold text-slate-900">Movimentações Recentes</h3>
+              <p className="text-xs text-slate-400 mt-0.5 font-semibold">Locações + contratos c/ intenção de venda</p>
+            </div>
             <a href="/contratos" className="text-primary-600 font-bold text-sm hover:underline flex items-center gap-1">
               Ver todos <ChevronRight size={16} />
             </a>
@@ -171,11 +247,11 @@ const Dashboard: React.FC = () => {
             <div className="flex items-center justify-center py-12">
               <Loader2 className="w-8 h-8 animate-spin text-primary-500" />
             </div>
-          ) : recentContracts.length === 0 ? (
+          ) : recentActivity.length === 0 ? (
             <div className="py-12 text-center">
               <FileText size={40} className="text-slate-200 mx-auto mb-3" />
-              <p className="text-slate-500 font-medium">Nenhum contrato registrado ainda.</p>
-              <p className="text-slate-400 text-sm mt-1">Crie um contrato na página de Contratos.</p>
+              <p className="text-slate-500 font-medium">Nenhuma movimentação ainda.</p>
+              <p className="text-slate-400 text-sm mt-1">Crie contratos na página de Contratos.</p>
             </div>
           ) : (
             <div className="overflow-x-auto -mx-2">
@@ -185,31 +261,42 @@ const Dashboard: React.FC = () => {
                     <th className="pb-4 px-2 font-semibold uppercase tracking-wider">Cliente</th>
                     <th className="pb-4 px-2 font-semibold uppercase tracking-wider hidden sm:table-cell">Veículo</th>
                     <th className="pb-4 px-2 font-semibold uppercase tracking-wider hidden md:table-cell">Data</th>
-                    <th className="pb-4 px-2 font-semibold uppercase tracking-wider">Status</th>
+                    <th className="pb-4 px-2 font-semibold uppercase tracking-wider">Tipo / Status</th>
                     <th className="pb-4 px-2 font-semibold uppercase tracking-wider text-right">Valor</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-50">
-                  {recentContracts.map(c => {
-                    const s = statusLabel(c.status);
+                  {recentActivity.map(row => {
+                    const badge = row.type === 'rental' ? rentalBadge(row.status) : saleBadge(row.status);
                     return (
-                      <tr key={c.id} className="hover:bg-slate-50/50 transition-colors">
+                      <tr key={`${row.type}-${row.id}`} className="hover:bg-slate-50/50 transition-colors">
                         <td className="py-4 px-2">
-                          <p className="font-semibold text-slate-900 text-sm">{c.client?.name}</p>
-                          <p className="text-xs text-slate-400">#{c.id.slice(0, 8)}</p>
+                          <p className="font-semibold text-slate-900 text-sm">{row.client_name}</p>
+                          <p className="text-xs text-slate-400">#{row.id.slice(0, 8)}</p>
                         </td>
                         <td className="py-4 px-2 font-medium text-slate-700 text-sm hidden sm:table-cell">
-                          {c.vehicle?.model}
-                          <span className="ml-1 text-xs text-slate-400 font-normal">{c.vehicle?.plate}</span>
+                          {row.vehicle_model}
+                          <span className="ml-1 text-xs text-slate-400 font-normal">{row.vehicle_plate}</span>
                         </td>
                         <td className="py-4 px-2 text-slate-500 text-sm hidden md:table-cell">
-                          {format(new Date(c.created_at), 'dd/MM/yyyy')}
+                          {format(new Date(row.created_at), 'dd/MM/yyyy')}
                         </td>
                         <td className="py-4 px-2">
-                          <span className={`px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-tight ${s.cls}`}>{s.text}</span>
+                          <div className="flex flex-col gap-1">
+                            {/* Type pill */}
+                            <div className="flex items-center gap-1">
+                              {row.type === 'rental'
+                                ? <FileText size={10} className="text-blue-400" />
+                                : <ShoppingCart size={10} className="text-violet-400" />}
+                              <span className={`text-[9px] font-black uppercase tracking-widest ${row.type === 'rental' ? 'text-blue-400' : 'text-violet-400'}`}>
+                                {row.type === 'rental' ? 'Locação' : 'C/ Venda'}
+                              </span>
+                            </div>
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase w-fit ${badge.cls}`}>{badge.text}</span>
+                          </div>
                         </td>
                         <td className="py-4 px-2 text-right font-bold text-slate-900 text-sm">
-                          R$ {Number(c.total_value).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                          R$ {row.value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                         </td>
                       </tr>
                     );
@@ -246,7 +333,7 @@ const Dashboard: React.FC = () => {
                   <div className="flex-1 min-w-0">
                     <p className="font-bold text-slate-900 truncate text-sm">{client.name}</p>
                     <p className="text-xs text-slate-500">
-                      {client.contractCount} locaç{client.contractCount === 1 ? 'ão' : 'ões'}
+                      {client.contractCount} contrato{client.contractCount !== 1 ? 's' : ''}
                     </p>
                   </div>
                   <div className="text-right shrink-0">
