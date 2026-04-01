@@ -123,7 +123,7 @@ const LandingPage: React.FC = () => {
       {/* ── Desktop/Mobile Navbar ─────────────────────────────────────────────── */}
       <nav className={`fixed top-0 left-0 w-full z-50 transition-all duration-500 py-4 px-6 md:px-12 flex justify-between items-center ${isScrolled ? 'bg-white/80 backdrop-blur-xl shadow-xl shadow-slate-200/50 scale-100 mt-0' : 'bg-transparent mt-2'}`}>
         <div className="flex items-center gap-4">
-           <img src="https://i.ibb.co/xtSXxqK8/itabaianaloc-Photoroom.png" alt="Itabaiana Loc" className="h-10 md:h-14 w-auto object-contain drop-shadow-sm" />
+           <img src="/logo.png" alt="Itabaiana Loc" className="h-10 md:h-14 w-auto object-contain drop-shadow-sm" />
         </div>
 
         <div className="hidden md:flex items-center gap-10">
@@ -534,7 +534,7 @@ const LandingPage: React.FC = () => {
         <div className="container mx-auto grid grid-cols-1 md:grid-cols-4 gap-16">
           <div className="col-span-1 md:col-span-1">
              <div className="text-3xl font-black tracking-tighter mb-8 text-indigo-900">
-                <img src="https://i.ibb.co/xtSXxqK8/itabaianaloc-Photoroom.png" alt="Itabaiana Loc" className="h-14 w-auto object-contain drop-shadow-sm mb-4" />
+                <img src="/logo.png" alt="Itabaiana Loc" className="h-14 w-auto object-contain drop-shadow-sm mb-4" />
              </div>
              <p className="text-slate-500 font-medium leading-relaxed mb-10">Líder em locação e venda de veículos na região. Inovação e confiança ao seu alcance.</p>
              <div className="flex gap-4">

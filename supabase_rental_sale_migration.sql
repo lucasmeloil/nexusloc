@@ -43,6 +43,8 @@ ALTER TABLE public.sale_installments ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "auth_all_sale_contracts"    ON public.sale_contracts;
 DROP POLICY IF EXISTS "auth_all_sale_installments" ON public.sale_installments;
 
+
+
 CREATE POLICY "auth_all_sale_contracts"    ON public.sale_contracts    FOR ALL TO authenticated USING (true) WITH CHECK (true);
 CREATE POLICY "auth_all_sale_installments" ON public.sale_installments FOR ALL TO authenticated USING (true) WITH CHECK (true);
 

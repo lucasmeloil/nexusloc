@@ -11,13 +11,14 @@ import {
   LayoutDashboard
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import logo from '../assets/logo.png';
 
 interface SidebarProps {
   isCollapsed: boolean;
   logoUrl?: string;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, logoUrl = '/logo.png' }) => {
+const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, logoUrl = logo }) => {
   const { signOut } = useAuth();
 
   const menuItems = [
@@ -32,9 +33,9 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, logoUrl = '/logo.png' })
 
   return (
     <aside className={`hidden md:flex ${isCollapsed ? 'w-20' : 'w-64'} bg-white border-r border-slate-200 flex-col h-screen sticky top-0 overflow-y-auto transition-all duration-300 ease-in-out shrink-0`}>
-      <div className={`flex justify-center items-center transition-all ${isCollapsed ? 'p-4 h-20' : 'p-8 h-24'}`}>
-        <div className={`flex items-center justify-center overflow-hidden rounded-lg transition-all ${isCollapsed ? 'w-10 h-10' : 'w-32 h-14'}`}>
-          <img src={logoUrl} alt="Company Logo" className="w-full h-full object-contain" />
+      <div className={`flex justify-center items-center border-b border-slate-100 transition-all ${isCollapsed ? 'p-3 h-20' : 'px-6 py-5 h-[100px]'}`}>
+        <div className={`flex items-center justify-center overflow-hidden transition-all ${isCollapsed ? 'w-12 h-12' : 'w-full h-full'}`}>
+          <img src={logoUrl} alt="Itabaiana Loc" className="w-full h-full object-contain drop-shadow-sm" />
         </div>
       </div>
 

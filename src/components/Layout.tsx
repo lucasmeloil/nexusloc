@@ -3,6 +3,7 @@ import { Outlet, Navigate, useLocation, NavLink, Link } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
+import logoAsset from '../assets/logo.png';
 import {
   Settings,
   Bell,
@@ -106,7 +107,7 @@ const Layout: React.FC = () => {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
-  const [logo, setLogo] = useState('/logo.png');
+  const [logo, setLogo] = useState(logoAsset);
 
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loadingNotifs, setLoadingNotifs] = useState(false);
@@ -377,8 +378,8 @@ const Layout: React.FC = () => {
             </button>
 
             {/* Mobile Logo */}
-            <div className="md:hidden flex-1 flex justify-center items-center overflow-hidden h-8">
-              <img src={logo} alt="Logo" className="h-full w-auto object-contain" />
+            <div className="md:hidden flex-1 flex justify-center items-center overflow-hidden h-10">
+              <img src={logo} alt="Itabaiana Loc" className="h-full w-auto object-contain drop-shadow-sm" />
             </div>
           </div>
 
@@ -549,10 +550,10 @@ const Layout: React.FC = () => {
 
         <footer className="p-4 sm:p-8 bg-white border-t border-slate-200">
           <div className="flex flex-col md:flex-row justify-between items-center gap-6">
-            <div className="flex items-center gap-4 opacity-70 grayscale hover:grayscale-0 transition-all duration-300">
-              <img src={logo} alt="NexusLoc Logo" className="h-6 w-auto object-contain" />
+            <div className="flex items-center gap-4 opacity-70 hover:opacity-100 transition-all duration-300">
+              <img src={logo} alt="Itabaiana Loc" className="h-10 w-auto object-contain" />
               <div className="h-4 w-px bg-slate-300"></div>
-              <p className="text-xs font-bold text-slate-500 tracking-widest uppercase">NexusLoc v1.0.0</p>
+              <p className="text-xs font-bold text-slate-500 tracking-widest uppercase">Itabaiana Loc v1.0.0</p>
             </div>
             <div className="flex items-center gap-2 text-xs font-medium text-slate-400">
               Desenvolvido <Heart size={14} className="text-red-400 fill-red-400" /> por Nexus Soft Tech

@@ -428,9 +428,9 @@ const Dashboard: React.FC = () => {
           )}
         </div>
         {/* End of Left Column */}
-        </div>
+      </div>
 
-        {/* Top Clients - Right Column */}
+      {/* Top Clients - Right Column */}
         <div className="card h-fit sticky top-8">
           <h3 className="text-xl font-bold text-slate-900 mb-6">Top Clientes</h3>
 

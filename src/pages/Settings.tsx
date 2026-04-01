@@ -14,10 +14,11 @@ import {
   Loader2,
   Clock,
   Coins,
+  Image,
 } from 'lucide-react';
 
 const DEFAULT_SETTINGS: SystemSettings = {
-  company_name: 'NexusLoc Rental',
+  company_name: 'Itabaiana Loc',
   company_cnpj: '',
   company_address: '',
   company_phone: '',
@@ -224,22 +225,16 @@ const Settings: React.FC = () => {
             />
           </Field>
 
-          <Field label="URL do Logotipo (Sugerido: PNG fundo transparente)" icon={<PlusCircle size={16} />}>
-            <div className="flex gap-4 items-start">
-              <input
-                type="text"
-                value={settings.logo_url}
-                onChange={e => set('logo_url', e.target.value)}
-                placeholder="https://exemplo.com/logo.png"
-                className="input-field flex-1"
-              />
-              {settings.logo_url && (
-                <div className="h-11 w-11 rounded-lg border border-slate-200 bg-slate-50 p-1 flex items-center justify-center overflow-hidden shrink-0 shadow-sm">
-                  <img src={settings.logo_url} alt="Preview" className="max-h-full max-w-full object-contain" />
-                </div>
-              )}
+          {/* Logo info banner */}
+          <div className="flex items-center gap-3 p-4 bg-indigo-50 border border-indigo-100 rounded-2xl">
+            <div className="p-2 bg-indigo-100 text-indigo-600 rounded-xl shrink-0">
+              <Image size={18} />
             </div>
-          </Field>
+            <div>
+              <p className="text-sm font-bold text-indigo-800">Logotipo definido globalmente</p>
+              <p className="text-xs text-indigo-500 mt-0.5">A logo da <strong>Itabaiana Loc</strong> está aplicada em todo o sistema: navbar, sidebar, login e rodapé.</p>
+            </div>
+          </div>
         </Section>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
