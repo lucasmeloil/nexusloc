@@ -265,19 +265,60 @@ const Contracts: React.FC = () => {
   const handlePayInstallment = async () => {
     if (!payingInst) return;
     setPaying(true);
-    const { error } = await supabase.from('sale_installments').update({ status: 'paid', paid_at: new Date().toISOString(), paid_amount: parseFloat(payAmount) || payingInst.amount, notes: payNotes || null }).eq('id', payingInst.id);
-    if (error) { showToast('error', error.message); }
-    else {
+    const paidVal = parseFloat(payAmount) || payingInst.amount;
+    const surplus = paidVal - payingInst.amount;
+
+    const { error } = await supabase.from('sale_installments').update({
+      status: 'paid',
+      paid_at: new Date().toISOString(),
+      paid_amount: paidVal,
+      notes: payNotes || null
+    }).eq('id', payingInst.id);
+
+    if (error) {
+      showToast('error', error.message);
+    } else {
       const cid = payingInst.sale_contract_id;
+
+      // ── Amortização (Abater do fim do contrato) ────────────────────────
+      if (surplus > 0.01) {
+        const { data: pendings } = await supabase
+          .from('sale_installments')
+          .select('*')
+          .eq('sale_contract_id', cid)
+          .neq('status', 'paid')
+          .neq('id', payingInst.id)
+          .order('installment_number', { ascending: false });
+
+        if (pendings && pendings.length > 0) {
+          let currentSurplus = surplus;
+          for (const inst of pendings) {
+            if (currentSurplus <= 0) break;
+            const toAbate = Math.min(inst.amount, currentSurplus);
+            const newAmount = Math.max(0, inst.amount - toAbate);
+            currentSurplus -= toAbate;
+
+            await supabase.from('sale_installments').update({
+              amount: parseFloat(newAmount.toFixed(2)),
+              status: newAmount <= 0.01 ? 'paid' : inst.status,
+              paid_at: newAmount <= 0.01 ? new Date().toISOString() : inst.paid_at,
+              paid_amount: newAmount <= 0.01 ? 0 : inst.paid_amount,
+              notes: newAmount <= 0.01
+                ? `Totalmente quitada via amortização (Pgto extra parc. ${payingInst.installment_number})`
+                : `Valor reduzido via amortização (Pgto extra parc. ${payingInst.installment_number})`
+            }).eq('id', inst.id);
+          }
+        }
+      }
+
       const { data: rem } = await supabase.from('sale_installments').select('id').eq('sale_contract_id', cid).neq('status', 'paid');
       if (rem && rem.length === 0) {
         await supabase.from('sale_contracts').update({ status: 'paid' }).eq('id', cid);
-        // Contrato quitado: libera o veículo para outros contratos
         const sc = saleContracts.find(c => c.id === cid);
         if (sc?.vehicle_id) await supabase.from('vehicles').update({ status: 'available' }).eq('id', sc.vehicle_id);
         fetchRental();
       }
-      showToast('success', 'Parcela baixada!');
+      showToast('success', surplus > 0 ? `Parcela baixada e excedente de ${fmt(surplus)} amortizado no fim do contrato!` : 'Parcela baixada!');
       setPayingInst(null);
       setPayAmount('');
       setPayNotes('');
@@ -467,7 +508,9 @@ const Contracts: React.FC = () => {
                   ) : filteredSale.map(c => {
                     const badge = saleBadge(c.status);
                     const paidCount = c.installment_records?.filter(i => i.status === 'paid').length ?? 0;
-                    const pct = c.installments > 0 ? (paidCount / c.installments) * 100 : 0;
+                    const totalPaid = (c.installment_records?.reduce((acc, inst) => acc + (Number(inst.paid_amount) || 0), 0) ?? 0) + Number(c.down_payment || 0);
+                    const remainingBalance = Math.max(0, Number(c.sale_price) - totalPaid);
+                    const pct = c.sale_price > 0 ? (totalPaid / c.sale_price) * 100 : 0;
                     return (
                       <tr key={c.id} className="group hover:bg-slate-50/50 transition-all">
                         <td className="px-6 py-5">
@@ -485,11 +528,17 @@ const Contracts: React.FC = () => {
                           <p className="text-[10px] text-slate-400">Entrada: {fmt(c.down_payment)}</p>
                         </td>
                         <td className="px-6 py-5 hidden lg:table-cell">
-                          <div className="flex items-center gap-2 min-w-[120px]">
-                            <div className="flex-1 bg-slate-100 h-2 rounded-full overflow-hidden">
-                              <div className="bg-violet-500 h-full rounded-full transition-all" style={{ width: `${pct}%` }} />
+                          <div className="space-y-1.5">
+                            <div className="flex items-center gap-2 min-w-[120px]">
+                              <div className="flex-1 bg-slate-100 h-2 rounded-full overflow-hidden">
+                                <div className="bg-violet-500 h-full rounded-full transition-all" style={{ width: `${pct}%` }} />
+                              </div>
+                              <span className="text-[10px] font-black text-slate-400 shrink-0">{paidCount}/{c.installments}</span>
                             </div>
-                            <span className="text-xs font-bold text-slate-500 shrink-0">{paidCount}/{c.installments}</span>
+                            <div className="flex justify-between items-center text-[10px]">
+                              <p className="font-bold text-emerald-600">Pago: {fmt(totalPaid)}</p>
+                              <p className="font-bold text-slate-400">Falta: {fmt(remainingBalance)}</p>
+                            </div>
                           </div>
                         </td>
                         <td className="px-6 py-5 text-right">
