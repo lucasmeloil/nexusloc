@@ -1,6 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
-import type { SaleContract, SaleInstallment, Client, Vehicle } from '../types';
 import {
   ShoppingCart, Search, Plus, X, Save, Loader2, CheckCircle2, AlertCircle,
   MessageCircle, Receipt, ChevronDown, ChevronUp, Eye, Trash2, Edit,
@@ -9,6 +8,8 @@ import {
 } from 'lucide-react';
 import { format, addWeeks, parseISO, isPast, isToday } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { generateReceiptPDF } from '../lib/receiptPDF';
+import type { SaleContract, SaleInstallment, Client, Vehicle, SystemSettings } from '../types';
 
 // ── helpers ────────────────────────────────────────────────────────────────
 
@@ -47,6 +48,7 @@ const RentalSale: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [settings, setSettings] = useState<SystemSettings | null>(null);
   const [toast, setToast] = useState<ToastState | null>(null);
 
   // modal states
@@ -82,17 +84,19 @@ const RentalSale: React.FC = () => {
   // ── Fetch ──
   const fetchData = useCallback(async () => {
     setLoading(true);
-    const [sc, cl, vh] = await Promise.all([
+    const [sc, cl, vh, st] = await Promise.all([
       supabase
         .from('sale_contracts')
         .select('*, client:clients(*), vehicle:vehicles(*), installment_records:sale_installments(*)')
         .order('created_at', { ascending: false }),
       supabase.from('clients').select('*').order('name'),
       supabase.from('vehicles').select('*').order('model'),
+      supabase.from('settings').select('*').single(),
     ]);
     if (sc.data) setContracts(sc.data as SaleContract[]);
     if (cl.data) setClients(cl.data);
     if (vh.data) setVehicles(vh.data);
+    if (st.data) setSettings(st.data as SystemSettings);
     setLoading(false);
   }, []);
 
@@ -199,12 +203,13 @@ const RentalSale: React.FC = () => {
   const handlePayInstallment = async () => {
     if (!payingInstallment) return;
     setPaying(true);
+    const finalAmount = parseFloat(payAmount) || payingInstallment.amount;
     const { error } = await supabase
       .from('sale_installments')
       .update({
         status: 'paid',
         paid_at: new Date().toISOString(),
-        paid_amount: parseFloat(payAmount) || payingInstallment.amount,
+        paid_amount: finalAmount,
         notes: payNotes || null,
       })
       .eq('id', payingInstallment.id);
@@ -221,11 +226,23 @@ const RentalSale: React.FC = () => {
       if (remaining && remaining.length === 0) {
         await supabase.from('sale_contracts').update({ status: 'paid' }).eq('id', contractId);
       }
+      
       showToast('success', 'Parcela baixada com sucesso!');
+      
+      // Auto-generate receipt or prompt for it
+      if (window.confirm('Baixar recibo em PDF agora?')) {
+        const fullContract = contracts.find(c => c.id === contractId);
+        if (fullContract && settings) {
+          const updatedInst = { ...payingInstallment, status: 'paid', paid_at: new Date().toISOString(), paid_amount: finalAmount };
+          handleGenerateReceipt(fullContract, updatedInst as SaleInstallment);
+        }
+      }
+
       setPayingInstallment(null);
       setPayAmount('');
       setPayNotes('');
       fetchData();
+      
       // refresh detail panel
       if (selectedContract?.id === contractId) {
         const { data } = await supabase
@@ -237,6 +254,27 @@ const RentalSale: React.FC = () => {
       }
     }
     setPaying(false);
+  };
+
+  const handleGenerateReceipt = async (contract: SaleContract, inst: SaleInstallment) => {
+    if (!settings) { showToast('error', 'Configurações não carregadas.'); return; }
+    try {
+      showToast('success', 'Gerando recibo PDF...');
+      await generateReceiptPDF({ installment: inst, contract, settings });
+      
+      // Notify via WhatsApp as well
+      const phone = contract.client?.phone?.replace(/\D/g, '');
+      const msg = `✅ *COMPROVANTE DE PAGAMENTO*\n\nOlá *${contract.client?.name}*!\nRecebemos o pagamento da parcela *${inst.installment_number}/${contract.installments}* do seu contrato.\n\n💰 *Valor:* ${currency(inst.paid_amount || inst.amount)}\n📅 *Data:* ${format(new Date(inst.paid_at || ''), 'dd/MM/yyyy', { locale: ptBR })}\n\n_NexusLoc_`;
+      
+      setTimeout(() => {
+        if (window.confirm('Enviar comprovante pelo WhatsApp também?')) {
+          window.open(`https://wa.me/55${phone}?text=${encodeURIComponent(msg)}`, '_blank');
+        }
+      }, 1000);
+    } catch (e) {
+      showToast('error', 'Erro ao gerar PDF.');
+      console.error(e);
+    }
   };
 
   const sendWhatsApp = (contract: SaleContract, installment?: SaleInstallment) => {
@@ -482,24 +520,6 @@ const RentalSale: React.FC = () => {
                 ))}
               </div>
 
-              {/* Actions */}
-              <div className="flex flex-wrap gap-2">
-                <button
-                  onClick={() => sendWhatsApp(selectedContract)}
-                  className="flex items-center gap-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-bold rounded-xl transition-all"
-                >
-                  <MessageCircle size={16} /> WhatsApp Geral
-                </button>
-                <button
-                  onClick={() => {
-                    showToast('success', 'Notificação push enviada ao admin!');
-                  }}
-                  className="flex items-center gap-2 px-4 py-2 bg-violet-100 hover:bg-violet-200 text-violet-700 text-sm font-bold rounded-xl transition-all"
-                >
-                  <Bell size={16} /> Notificar Admin
-                </button>
-              </div>
-
               {/* Installments Table */}
               <div>
                 <h4 className="text-base font-extrabold text-slate-900 mb-3 flex items-center gap-2">
@@ -565,14 +585,10 @@ const RentalSale: React.FC = () => {
 
                             {inst.status === 'paid' && (
                               <button
-                                onClick={() => {
-                                  const phone = selectedContract.client?.phone?.replace(/\D/g, '');
-                                  const msg = `✅ Recibo - Parcela ${inst.installment_number}/${selectedContract.installments}\nCliente: ${selectedContract.client?.name}\nVeículo: ${selectedContract.vehicle?.model}\nValor pago: ${currency(inst.paid_amount ?? inst.amount)}\nData: ${format(new Date(inst.paid_at!), 'dd/MM/yyyy')}\n\nNexusLoc`;
-                                  window.open(`https://wa.me/55${phone}?text=${encodeURIComponent(msg)}`, '_blank');
-                                }}
+                                onClick={() => handleGenerateReceipt(selectedContract, inst)}
                                 className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold rounded-xl transition-all"
                               >
-                                <Receipt size={14} /> Recibo
+                                <Receipt size={14} /> Recibo PDF
                               </button>
                             )}
                           </div>

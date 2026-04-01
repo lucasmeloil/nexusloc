@@ -10,6 +10,7 @@ import { format, addDays, addWeeks, addMonths, differenceInDays, parseISO, isPas
 import { ptBR } from 'date-fns/locale';
 import { generateContractPDF } from '../lib/contractPDF';
 import { generateSaleContractPDF } from '../lib/saleContractPDF';
+import { generateReceiptPDF } from '../lib/receiptPDF';
 import type { SystemSettings } from '../types';
 
 // ── Helpers ────────────────────────────────────────────────────────────────
@@ -319,6 +320,15 @@ const Contracts: React.FC = () => {
         fetchRental();
       }
       showToast('success', surplus > 0 ? `Parcela baixada e excedente de ${fmt(surplus)} amortizado no fim do contrato!` : 'Parcela baixada!');
+      
+      // Auto-generate receipt prompt
+      if (window.confirm('Baixar recibo em PDF agora?')) {
+        const sc = saleContracts.find(c => c.id === cid);
+        if (sc && settings) {
+          const updatedInst = { ...payingInst, status: 'paid', paid_at: new Date().toISOString(), paid_amount: paidVal };
+          handleGenerateReceipt(sc, updatedInst as SaleInstallment);
+        }
+      }
       setPayingInst(null);
       setPayAmount('');
       setPayNotes('');
@@ -337,12 +347,30 @@ const Contracts: React.FC = () => {
     await generateSaleContractPDF(c, company, settings.contract_clauses);
   };
 
-  const sendSaleWhatsApp = (c: SaleContract, inst?: SaleInstallment) => {
+  const sendSaleWhatsApp = (c: SaleContract, installment?: SaleInstallment) => {
     const phone = c.client?.phone?.replace(/\D/g, '');
-    const msg = inst
-      ? `Olá ${c.client?.name}! Sua parcela ${inst.installment_number}/${c.installments} de ${fmt(inst.amount)} vence em ${format(parseISO(inst.due_date), 'dd/MM/yyyy')}.\nNexusLoc`
-      : `Olá ${c.client?.name}! Seu contrato do ${c.vehicle?.model} - ${fmt(c.sale_price)} em ${c.installments}x.\nNexusLoc`;
+    const msg = installment
+      ? `Olá ${c.client?.name}! 👋\n\nSua parcela ${installment.installment_number}/${c.installments} de ${fmt(installment.amount)} vence em ${format(parseISO(installment.due_date), 'dd/MM/yyyy')}.\n\nNexusLoc – Aluguel com Intenção de Venda`
+      : `Olá ${c.client?.name}! 👋\n\nSeu contrato de *${c.vehicle?.model}* está em dia. Valor total: ${fmt(c.sale_price)}.\n\nNexusLoc`;
     window.open(`https://wa.me/55${phone}?text=${encodeURIComponent(msg)}`, '_blank');
+  };
+
+  const handleGenerateReceipt = async (c: SaleContract, inst: SaleInstallment) => {
+    if (!settings) { showToast('error', 'Configurações não carregadas.'); return; }
+    try {
+      showToast('success', 'Gerando recibo PDF...');
+      await generateReceiptPDF({ installment: inst, contract: c, settings });
+      
+      const phone = c.client?.phone?.replace(/\D/g, '');
+      const msg = `✅ *COMPROVANTE DE PAGAMENTO*\n\nOlá *${c.client?.name}*!\nRecebemos o pagamento da parcela *${inst.installment_number}/${c.installments}* do seu contrato.\n\n💰 *Valor:* ${fmt(inst.paid_amount || inst.amount)}\n📅 *Data:* ${format(new Date(inst.paid_at || ''), 'dd/MM/yyyy', { locale: ptBR })}\n\n_Estou enviando o PDF do recibo em anexo abaixo_ 👇`;
+      
+      setTimeout(() => {
+        window.open(`https://wa.me/55${phone}?text=${encodeURIComponent(msg)}`, '_blank');
+      }, 1500);
+    } catch (e) {
+      showToast('error', 'Erro ao gerar PDF.');
+      console.error(e);
+    }
   };
 
   const filteredSale = saleContracts.filter(c =>
@@ -765,14 +793,10 @@ const Contracts: React.FC = () => {
                         )}
                         {inst.status === 'paid' && (
                           <button
-                            onClick={() => {
-                              const phone = selectedSale.client?.phone?.replace(/\D/g, '');
-                              const msg = `✅ Recibo - Parcela ${inst.installment_number}/${selectedSale.installments}\nCliente: ${selectedSale.client?.name}\nValor: ${fmt(inst.paid_amount ?? inst.amount)}\nData: ${format(new Date(inst.paid_at!), 'dd/MM/yyyy')}\nNexusLoc`;
-                              window.open(`https://wa.me/55${phone}?text=${encodeURIComponent(msg)}`, '_blank');
-                            }}
+                            onClick={() => handleGenerateReceipt(selectedSale, inst)}
                             className="flex items-center gap-1 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold rounded-xl"
                           >
-                            <Receipt size={14} /> Recibo
+                            <Receipt size={14} /> Recibo PDF
                           </button>
                         )}
                       </div>
