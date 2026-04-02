@@ -581,8 +581,16 @@ const LandingPage: React.FC = () => {
           </div>
         </div>
         
-        <div className="container mx-auto pt-20 mt-20 border-t border-slate-200 text-center text-slate-400">
-          <p className="text-xs font-black uppercase tracking-[0.2em]">&copy; {new Date().getFullYear()} Itabaiana Loc. Todos os direitos reservados.</p>
+        <div className="container mx-auto pt-20 mt-20 border-t border-slate-200 text-center flex flex-col items-center gap-4">
+          <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">&copy; {new Date().getFullYear()} Itabaiana Loc. Todos os direitos reservados.</p>
+          <a 
+            href="https://nexussofttech.com.br" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="flex items-center justify-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-slate-300 hover:text-indigo-600 transition-all group"
+          >
+            Desenvolvido por <span className="underline decoration-indigo-200 underline-offset-4">Nexus Soft Tech</span>
+          </a>
         </div>
       </footer>
 

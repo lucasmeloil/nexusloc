@@ -65,6 +65,8 @@ const RentalSale: React.FC = () => {
   const [payAmount, setPayAmount] = useState('');
   const [payNotes, setPayNotes] = useState('');
   const [paying, setPaying] = useState(false);
+  const [amortMode, setAmortMode] = useState<'auto' | 'specific'>('auto');
+  const [amortTargetId, setAmortTargetId] = useState<string>('');
 
   // form
   const [form, setForm] = useState({
@@ -216,14 +218,67 @@ const RentalSale: React.FC = () => {
 
     if (error) { showToast('error', error.message); }
     else {
-      // check if all paid → update contract status
       const contractId = payingInstallment.sale_contract_id;
-      const { data: remaining } = await supabase
+      // ── Amortização (Abater do fim ou parcela específica) ─────────────────
+      const surplus = finalAmount - payingInstallment.amount;
+      if (surplus > 0.01) {
+        if (amortMode === 'specific' && amortTargetId) {
+          const { data: targetInst } = await supabase
+            .from('sale_installments')
+            .select('*')
+            .eq('id', amortTargetId)
+            .single();
+          
+          if (targetInst) {
+            const toAbate = Math.min(targetInst.amount, surplus);
+            const newAmount = Math.max(0, targetInst.amount - toAbate);
+            await supabase.from('sale_installments').update({
+              amount: parseFloat(newAmount.toFixed(2)),
+              status: newAmount <= 0.01 ? 'paid' : targetInst.status,
+              paid_at: newAmount <= 0.01 ? new Date().toISOString() : targetInst.paid_at,
+              notes: newAmount <= 0.01
+                ? `Totalmente quitada via amortização direta (Pgto extra parc. ${payingInstallment.installment_number})`
+                : `Abatimento parcial via amortização direta (Pgto extra parc. ${payingInstallment.installment_number})`
+            }).eq('id', amortTargetId);
+          }
+        } else {
+          // Default: abater do fim do contrato (auto)
+          const { data: pendings } = await supabase
+            .from('sale_installments')
+            .select('*')
+            .eq('sale_contract_id', contractId)
+            .neq('status', 'paid')
+            .neq('id', payingInstallment.id)
+            .order('installment_number', { ascending: false });
+
+          if (pendings && pendings.length > 0) {
+            let currentSurplus = surplus;
+            for (const inst of pendings) {
+              if (currentSurplus <= 0.009) break;
+              const toAbate = Math.min(inst.amount, currentSurplus);
+              const newAmount = Math.max(0, inst.amount - toAbate);
+              currentSurplus -= toAbate;
+
+              await supabase.from('sale_installments').update({
+                amount: parseFloat(newAmount.toFixed(2)),
+                status: newAmount <= 0.01 ? 'paid' : inst.status,
+                paid_at: newAmount <= 0.01 ? new Date().toISOString() : inst.paid_at,
+                notes: newAmount <= 0.01
+                  ? `Totalmente quitada via amortização (Pgto extra parc. ${payingInstallment.installment_number})`
+                  : `Valor reduzido via amortização (Pgto extra parc. ${payingInstallment.installment_number})`
+              }).eq('id', inst.id);
+            }
+          }
+        }
+      }
+
+      // check if all paid → update contract status
+      const { data: remainingCheck } = await supabase
         .from('sale_installments')
         .select('id')
         .eq('sale_contract_id', contractId)
         .neq('status', 'paid');
-      if (remaining && remaining.length === 0) {
+      if (remainingCheck && remainingCheck.length === 0) {
         await supabase.from('sale_contracts').update({ status: 'paid' }).eq('id', contractId);
       }
       
@@ -631,7 +686,7 @@ const RentalSale: React.FC = () => {
                   className="input-field"
                 />
               </div>
-              <div className="space-y-1.5">
+               <div className="space-y-1.5">
                 <label className="text-sm font-semibold text-slate-700">Observações (opcional)</label>
                 <input
                   type="text"
@@ -641,6 +696,52 @@ const RentalSale: React.FC = () => {
                   className="input-field"
                 />
               </div>
+
+              {parseFloat(payAmount) > payingInstallment.amount && (
+                <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 space-y-3 animate-in fade-in slide-in-from-top-2 duration-300">
+                  <div className="flex items-center gap-2 text-amber-800 font-bold text-xs uppercase tracking-widest">
+                    <TrendingUp size={16} /> Saldo Extra: {currency(parseFloat(payAmount) - payingInstallment.amount)}
+                  </div>
+                  <div className="space-y-2">
+                    <p className="text-xs font-semibold text-amber-700">Abater saldo extra em qual semana/parcela?</p>
+                    <div className="flex gap-2">
+                      <button 
+                        onClick={() => setAmortMode('auto')}
+                        className={`flex-1 py-2 px-3 rounded-xl text-[10px] font-black uppercase transition-all border ${amortMode === 'auto' ? 'bg-amber-600 border-amber-600 text-white shadow-lg shadow-amber-500/20' : 'bg-white border-amber-200 text-amber-600 hover:bg-amber-100'}`}
+                      >
+                        Abater do Final
+                      </button>
+                      <button 
+                        onClick={() => setAmortMode('specific')}
+                        className={`flex-1 py-2 px-3 rounded-xl text-[10px] font-black uppercase transition-all border ${amortMode === 'specific' ? 'bg-amber-600 border-amber-600 text-white shadow-lg shadow-amber-500/20' : 'bg-white border-amber-200 text-amber-600 hover:bg-amber-100'}`}
+                      >
+                        Escolher Semana
+                      </button>
+                    </div>
+                  </div>
+                  {amortMode === 'specific' && (
+                    <div className="space-y-1.5 animate-in zoom-in-95 duration-200">
+                      <label className="text-[10px] font-black uppercase text-amber-600 tracking-widest">Selecionar Parcela Alvo:</label>
+                      <select 
+                        value={amortTargetId}
+                        onChange={e => setAmortTargetId(e.target.value)}
+                        className="w-full bg-white border border-amber-200 rounded-xl px-4 py-2.5 text-sm focus:ring-4 focus:ring-amber-500/10 outline-none"
+                      >
+                        <option value="">Selecione a parcela...</option>
+                        {selectedContract?.installment_records
+                          ?.filter(i => i.status !== 'paid' && i.id !== payingInstallment.id)
+                          .sort((a,b) => a.installment_number - b.installment_number)
+                          .map(i => (
+                            <option key={i.id} value={i.id}>
+                              Parcela {i.installment_number} — {currency(i.amount)} (Venc. {format(parseISO(i.due_date), 'dd/MM/yyyy')})
+                            </option>
+                          ))
+                        }
+                      </select>
+                    </div>
+                  )}
+                </div>
+              )}
               <div className="flex gap-3 pt-2">
                 <button onClick={() => setPayingInstallment(null)} className="btn-secondary flex-1">Cancelar</button>
                 <button

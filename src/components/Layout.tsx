@@ -8,7 +8,6 @@ import {
   Settings,
   Bell,
   User,
-  Heart,
   Menu,
   X,
   Users,
@@ -555,9 +554,14 @@ const Layout: React.FC = () => {
               <div className="h-4 w-px bg-slate-300"></div>
               <p className="text-xs font-bold text-slate-500 tracking-widest uppercase">Itabaiana Loc v1.0.0</p>
             </div>
-            <div className="flex items-center gap-2 text-xs font-medium text-slate-400">
-              Desenvolvido <Heart size={14} className="text-red-400 fill-red-400" /> por Nexus Soft Tech
-            </div>
+            <a 
+              href="https://nexussofttech.com.br" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="flex items-center gap-1.5 text-xs font-medium text-slate-400 hover:text-primary-600 transition-colors group"
+            >
+              Desenvolvido por <span className="font-bold underline decoration-primary-200 underline-offset-4">Nexus Soft Tech</span>
+            </a>
             <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest text-center sm:text-left">
               &copy; 2026 Todos os direitos reservados
             </p>
