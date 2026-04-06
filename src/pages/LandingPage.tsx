@@ -156,27 +156,27 @@ const LandingPage: React.FC = () => {
                 transition={{ delay: 0.3, duration: 1, ease: [0.16, 1, 0.3, 1] }}
                 className="max-w-4xl w-full"
               >
-                <div className="flex items-center gap-3 mb-6 sm:mb-8">
+                <div className="flex items-center gap-3 mb-4 sm:mb-8">
                   <div className="h-[2px] w-12 bg-indigo-500" />
                   <span className="text-white font-black uppercase tracking-[0.4em] text-[10px] sm:text-[10px] drop-shadow-sm leading-tight">
                     Premium Experience · Itabaiana Loc
                   </span>
                 </div>
 
-                <h1 className="text-[3.5rem] leading-[1] sm:text-7xl md:text-9xl lg:text-[8rem] font-display font-black text-white sm:leading-[0.9] tracking-tight mb-4 sm:mb-8 drop-shadow-2xl">
+                <h1 className="text-4xl leading-[1.05] sm:text-7xl md:text-9xl lg:text-[8rem] font-display font-black text-white sm:leading-[0.9] tracking-tight mb-4 sm:mb-8 drop-shadow-2xl">
                   {HERO_SLIDES[activeSlide].title}
                 </h1>
 
-                <p className="text-lg sm:text-xl md:text-2xl text-slate-300/90 font-medium mb-8 sm:mb-12 max-w-[90%] sm:max-w-2xl leading-relaxed drop-shadow-md">
+                <p className="text-base sm:text-xl md:text-2xl text-slate-300/90 font-medium mb-6 sm:mb-12 w-full sm:max-w-2xl leading-relaxed drop-shadow-md">
                   {HERO_SLIDES[activeSlide].subtitle}
                 </p>
 
-                <div className="flex flex-col sm:flex-row gap-3 sm:gap-5 w-[90%] sm:w-auto relative z-20">
-                  <a href={HERO_SLIDES[activeSlide].href || '#planos'} className="h-14 sm:h-16 px-6 sm:px-12 bg-white text-slate-900 rounded-xl sm:rounded-2xl font-black uppercase text-[11px] tracking-[0.2em] shadow-[0_20px_40px_-10px_rgba(255,255,255,0.2)] hover:bg-slate-100 hover:-translate-y-1 active:scale-95 transition-all text-center flex items-center justify-center gap-3 group w-full sm:w-auto">
+                <div className="flex flex-col sm:flex-row gap-3 sm:gap-5 w-full sm:w-auto relative z-20">
+                  <a href={HERO_SLIDES[activeSlide].href || '#planos'} className="h-12 sm:h-16 px-6 sm:px-12 bg-white text-slate-900 rounded-xl sm:rounded-2xl font-black uppercase text-[11px] tracking-[0.2em] shadow-[0_20px_40px_-10px_rgba(255,255,255,0.2)] hover:bg-slate-100 hover:-translate-y-1 active:scale-95 transition-all text-center flex items-center justify-center gap-3 group w-full sm:w-auto">
                     {HERO_SLIDES[activeSlide].cta}
                     <ArrowRight size={16} className="transition-transform group-hover:translate-x-1 sm:w-[18px] sm:h-[18px]" />
                   </a>
-                  <a href={`https://wa.me/5579999641398?text=${encodeURIComponent("Olá! Estou no site e gostaria de falar sobre a assinatura da CG 160.")}`} target="_blank" className="h-14 sm:h-16 px-6 sm:px-12 bg-white/5 backdrop-blur-xl border border-white/20 text-white rounded-xl sm:rounded-2xl font-black uppercase text-[11px] tracking-[0.2em] hover:bg-white/10 active:scale-95 transition-all flex items-center justify-center gap-3 group w-full sm:w-auto">
+                  <a href={`https://wa.me/5579999641398?text=${encodeURIComponent("Olá! Estou no site e gostaria de falar sobre a assinatura da CG 160.")}`} target="_blank" className="h-12 sm:h-16 px-6 sm:px-12 bg-white/5 backdrop-blur-xl border border-white/20 text-white rounded-xl sm:rounded-2xl font-black uppercase text-[11px] tracking-[0.2em] hover:bg-white/10 active:scale-95 transition-all flex items-center justify-center gap-3 group w-full sm:w-auto">
                     <Phone size={16} className="transition-transform group-hover:rotate-12 sm:w-[18px] sm:h-[18px]" />
                     Atendimento VIP
                   </a>

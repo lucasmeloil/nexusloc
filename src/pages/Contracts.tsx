@@ -148,6 +148,14 @@ const Contracts: React.FC = () => {
     e.preventDefault();
     if (!formData.client_id) { showToast('error', 'Selecione um cliente.'); return; }
     if (!formData.vehicle_id) { showToast('error', 'Selecione um veículo.'); return; }
+    
+    // Auto-Verificação: O veículo tem que estar disponível
+    const veh = vehicles.find(v => v.id === formData.vehicle_id);
+    if (!editingContract && veh && veh.status !== 'available') {
+      showToast('error', `Este veículo não está disponível (Status: ${veh.status}). Não é possível locar.`);
+      return;
+    }
+
     setSaving(true);
     const payload = { ...formData, balance: parseFloat((formData.total_value - formData.deposit).toFixed(2)), total_value: parseFloat(formData.total_value.toFixed(2)), deposit: parseFloat(formData.deposit.toString()) };
     if (editingContract) {
@@ -220,8 +228,8 @@ const Contracts: React.FC = () => {
 
     // Verifica se veiculo já está bloqueado
     const veh = vehicles.find(v => v.id === saleForm.vehicle_id);
-    if (!editingSale && veh && (veh.status === 'rented' || veh.status === 'in_sale')) {
-      showToast('error', `Veículo indisponível — status atual: ${veh.status === 'rented' ? 'Alugado' : 'Em Contrato de Venda'}.`);
+    if (!editingSale && veh && veh.status !== 'available') {
+      showToast('error', `Veículo indisponível — status atual: ${veh.status}.`);
       return;
     }
 

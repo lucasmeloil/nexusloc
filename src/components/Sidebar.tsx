@@ -8,7 +8,10 @@ import {
   BarChart3, 
   Settings, 
   LogOut,
-  LayoutDashboard
+  LayoutDashboard,
+  Wrench,
+  ShieldAlert,
+  ShoppingCart
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import logo from '../assets/logo.png';
@@ -25,7 +28,10 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, logoUrl = logo }) => {
     { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
     { icon: Users, label: 'Clientes', path: '/clientes' },
     { icon: Car, label: 'Veículos', path: '/veiculos' },
-    { icon: FileText, label: 'Contratos', path: '/contratos' },
+    { icon: FileText, label: 'Contratos Diários', path: '/contratos' },
+    { icon: ShoppingCart, label: 'Aluguel Venda', path: '/venda-aluguel' },
+    { icon: Wrench, label: 'Oficina', path: '/manutencao' },
+    { icon: ShieldAlert, label: 'Infrações', path: '/infracoes' },
     { icon: DollarSign, label: 'Faturamento', path: '/faturamento' },
     { icon: BarChart3, label: 'Relatórios', path: '/relatorios' },
     { icon: Settings, label: 'Configurações', path: '/configuracoes' },

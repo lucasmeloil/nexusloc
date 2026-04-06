@@ -115,6 +115,14 @@ const RentalSale: React.FC = () => {
     if (!form.client_id) { showToast('error', 'Selecione um cliente.'); return; }
     if (!form.vehicle_id) { showToast('error', 'Selecione um veículo.'); return; }
     if (form.sale_price <= 0) { showToast('error', 'Informe o valor de venda.'); return; }
+
+    // Verifica se o veículo está disponível
+    const veh = vehicles.find(v => v.id === form.vehicle_id);
+    if (!editingContract && veh && veh.status !== 'available') {
+      showToast('error', `Veículo indisponível (Status: ${veh.status}).`);
+      return;
+    }
+
     setSaving(true);
 
     const contractPayload = {
@@ -166,6 +174,10 @@ const RentalSale: React.FC = () => {
         });
 
         await supabase.from('sale_installments').insert(installments);
+        
+        // Bloqueia o veículo com o status 'in_sale'
+        await supabase.from('vehicles').update({ status: 'in_sale' }).eq('id', form.vehicle_id);
+
         showToast('success', `Contrato gerado com ${form.installments} parcelas!`);
         setIsModalOpen(false);
         fetchData();

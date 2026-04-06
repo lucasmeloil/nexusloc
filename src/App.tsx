@@ -11,6 +11,9 @@ import Reports from './pages/Reports';
 import Settings from './pages/Settings';
 import LandingPage from './pages/LandingPage';
 import Catalog from './pages/Catalog';
+import RentalSale from './pages/RentalSale';
+import Maintenance from './pages/Maintenance';
+import Infractions from './pages/Infractions';
 
 // Componente de Proteção de Rotas (Guarda de Segurança)
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -51,6 +54,9 @@ const App: React.FC = () => {
             <Route path="/clientes" element={<Clients />} />
             <Route path="/veiculos" element={<Vehicles />} />
             <Route path="/contratos" element={<Contracts />} />
+            <Route path="/venda-aluguel" element={<RentalSale />} />
+            <Route path="/manutencao" element={<Maintenance />} />
+            <Route path="/infracoes" element={<Infractions />} />
             <Route path="/faturamento" element={<Billing />} />
             <Route path="/relatorios" element={<Reports />} />
             <Route path="/configuracoes" element={<Settings />} />

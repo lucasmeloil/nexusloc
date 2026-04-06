@@ -20,6 +20,7 @@ import {
   CheckCircle2,
   Wrench,
   ShoppingCart,
+  ShieldAlert,
   CreditCard,
   UserPlus,
   Clock,
@@ -42,7 +43,10 @@ const menuItems = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
   { icon: Users, label: 'Clientes', path: '/clientes' },
   { icon: Car, label: 'Veículos', path: '/veiculos' },
-  { icon: FileText, label: 'Contratos', path: '/contratos' },
+  { icon: FileText, label: 'Contratos Diários', path: '/contratos' },
+  { icon: ShoppingCart, label: 'Aluguel Venda', path: '/venda-aluguel' },
+  { icon: Wrench, label: 'Oficina', path: '/manutencao' },
+  { icon: ShieldAlert, label: 'Infrações', path: '/infracoes' },
   { icon: DollarSign, label: 'Faturamento', path: '/faturamento' },
   { icon: BarChart3, label: 'Relatórios', path: '/relatorios' },
   { icon: Settings, label: 'Configurações', path: '/configuracoes' },
@@ -511,7 +515,7 @@ const Layout: React.FC = () => {
         </header>
 
         {/* Mobile Dropdown Menu */}
-        <div className={`md:hidden fixed top-16 left-0 w-full bg-white border-b border-slate-200 shadow-2xl overflow-hidden transition-all duration-300 z-20 ${isMobileMenuOpen ? 'max-h-[600px] opacity-100' : 'max-h-0 opacity-0 pointer-events-none'}`}>
+        <div className={`md:hidden fixed top-16 left-0 w-full bg-white border-b border-slate-200 shadow-2xl transition-all duration-300 z-20 ${isMobileMenuOpen ? 'max-h-[85vh] opacity-100 overflow-y-auto' : 'max-h-0 opacity-0 pointer-events-none overflow-hidden'}`}>
           <nav className="flex flex-col p-4 space-y-1">
             {menuItems.map((item) => (
               <NavLink

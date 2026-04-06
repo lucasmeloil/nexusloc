@@ -112,3 +112,34 @@ export interface SaleInstallment {
   status: 'pending' | 'paid' | 'overdue';
   notes: string | null;
 }
+
+export interface MaintenanceSchedule {
+  id: string;
+  created_at: string;
+  vehicle_id: string;
+  contract_id?: string | null;
+  scheduled_date: string;
+  description: string;
+  status: 'pending' | 'completed' | 'overdue';
+  cost: number;
+  completed_at: string | null;
+  vehicle?: Vehicle;
+  contract?: SaleContract;
+}
+
+export interface TrafficInfraction {
+  id: string;
+  created_at: string;
+  contract_id: string;
+  vehicle_id: string;
+  infraction_date: string;
+  notice_number: string;
+  description: string;
+  amount: number;
+  status: 'pending' | 'added_to_installment' | 'paid';
+  linked_installment_id?: string | null;
+  driver_indication_date?: string | null;
+  vehicle?: Vehicle;
+  contract?: SaleContract;
+  linked_installment?: SaleInstallment;
+}
