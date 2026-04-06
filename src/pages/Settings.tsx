@@ -19,7 +19,7 @@ import {
   UserPlus,
   ShieldCheck,
   Lock,
-  UserCircle
+  AlertCircle,
 } from 'lucide-react';
 
 const DEFAULT_SETTINGS: SystemSettings = {
@@ -85,6 +85,12 @@ const Settings: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [toast, setToast] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
+
+  const showToast = (type: 'success' | 'error', msg: string) => {
+    setToast({ type, msg });
+    setTimeout(() => setToast(null), 4000);
+  };
 
   // Estados para Gestão de Usuários
   const [newAdminEmail, setNewAdminEmail] = useState('');
@@ -122,20 +128,31 @@ const Settings: React.FC = () => {
     e.preventDefault();
     setSaving(true);
     try {
+      const payload = {
+        ...settings,
+        id: settings.id || '00000000-0000-0000-0000-000000000001',
+        // Ensure required fields always have a value
+        company_name: settings.company_name || 'Itabaiana Loc',
+        company_cnpj: settings.company_cnpj || '',
+        company_address: settings.company_address || '',
+        company_phone: settings.company_phone || '',
+        company_email: settings.company_email || '',
+        logo_url: settings.logo_url || '/logo.png',
+        updated_at: new Date().toISOString(),
+      };
+
       const { error } = await supabase
         .from('settings')
-        .upsert({ 
-          ...settings, 
-          id: settings.id || '00000000-0000-0000-0000-000000000001',
-          updated_at: new Date().toISOString() 
-        });
+        .upsert(payload, { onConflict: 'id' });
 
       if (error) throw error;
+
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
-    } catch (error) {
-      console.error('Error saving settings:', error);
-      alert('Erro ao salvar configurações.');
+      showToast('success', 'Dados da locadora atualizados e salvos com sucesso!');
+    } catch (err: any) {
+      console.error('Error saving settings:', err);
+      showToast('error', `Erro ao salvar: ${err?.message || 'Tente novamente.'}`);
     } finally {
       setSaving(false);
     }
@@ -284,6 +301,15 @@ const Settings: React.FC = () => {
 
   return (
     <div className="space-y-8 fade-in max-w-4xl mx-auto pb-10">
+      {/* Toast Notification */}
+      {toast && (
+        <div className={`fixed top-5 right-5 z-[100] flex items-center gap-3 px-5 py-4 rounded-2xl shadow-2xl text-white font-semibold text-sm animate-in slide-in-from-top-2 duration-300 max-w-sm ${
+          toast.type === 'success' ? 'bg-emerald-600' : 'bg-red-600'
+        }`}>
+          {toast.type === 'success' ? <CheckCircle2 size={20} /> : <AlertCircle size={20} />}
+          {toast.msg}
+        </div>
+      )}
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <div>
           <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">Configurações do Sistema</h2>
