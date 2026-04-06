@@ -734,7 +734,7 @@ const LandingPage: React.FC = () => {
                 <div className="absolute top-0 left-0 w-full h-2 bg-emerald-500" />
                 <div className="flex justify-between items-center mb-5 sm:mb-6 mt-1">
                    <h3 className="font-black text-slate-900 flex items-center gap-2 text-base sm:text-lg leading-none">
-                     <MessageCircle className="text-emerald-500 shrink-0" size={20} />
+                     <img src="https://i.ibb.co/GQpR19zj/iconchat.png" className="w-9 h-9 rounded-full border-2 border-emerald-500/10 shadow-sm object-cover" alt="Logo" />
                      Atendimento Fácil
                    </h3>
                    <button onClick={() => setWaFormOpen(false)} className="text-slate-400 hover:text-slate-600 bg-slate-50 p-1.5 rounded-full outline-none shrink-0">
