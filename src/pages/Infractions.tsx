@@ -22,12 +22,20 @@ const Infractions: React.FC = () => {
 
   const fetchData = useCallback(async () => {
     setLoading(true);
-    const [inf, sc] = await Promise.all([
-      supabase.from('traffic_infractions').select('*, vehicle:vehicles(*), contract:sale_contracts(*, client:clients(*))').order('created_at', { ascending: false }),
-      supabase.from('sale_contracts').select('*, client:clients(*), vehicle:vehicles(*)').eq('status', 'active')
-    ]);
-    if (inf.data) setInfractions(inf.data as TrafficInfraction[]);
-    if (sc.data) setContracts(sc.data as SaleContract[]);
+    
+    // Fetch contracts first
+    const { data: sc } = await supabase.from('sale_contracts').select('*, client:clients(*), vehicle:vehicles(*)').eq('status', 'active');
+    if (sc) setContracts(sc as SaleContract[]);
+
+    // Try to fetch infractions (table might not exist yet)
+    try {
+      const { data: inf } = await supabase
+        .from('traffic_infractions')
+        .select('*, vehicle:vehicles(*), contract:sale_contracts(*, client:clients(*))')
+        .order('created_at', { ascending: false });
+      if (inf) setInfractions(inf as TrafficInfraction[]);
+    } catch (_) {}
+    
     setLoading(false);
   }, []);
 

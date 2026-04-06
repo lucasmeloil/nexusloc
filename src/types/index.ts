@@ -96,6 +96,7 @@ export interface SaleContract {
   client?: Client;
   vehicle?: Vehicle;
   installment_records?: SaleInstallment[];
+  substitutions?: ContractSubstitution[];
 }
 
 export interface SaleInstallment {
@@ -142,4 +143,17 @@ export interface TrafficInfraction {
   vehicle?: Vehicle;
   contract?: SaleContract;
   linked_installment?: SaleInstallment;
+}
+
+export interface ContractSubstitution {
+  id: string;
+  contract_id: string;
+  substitute_vehicle_id: string;
+  start_date: string;
+  end_date: string | null;
+  reason: string;
+  created_at: string;
+  
+  contract?: SaleContract;
+  substitute_vehicle?: Vehicle;
 }

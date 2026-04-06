@@ -28,14 +28,24 @@ const Maintenance: React.FC = () => {
 
   const fetchData = useCallback(async () => {
     setLoading(true);
-    const [ms, vh, sc] = await Promise.all([
-      supabase.from('maintenance_schedules').select('*, vehicle:vehicles(*), contract:sale_contracts(*)').order('scheduled_date', { ascending: true }),
+    
+    // Fetch base data first
+    const [vh, sc] = await Promise.all([
       supabase.from('vehicles').select('*').order('model'),
       supabase.from('sale_contracts').select('*, client:clients(*)').eq('status', 'active')
     ]);
-    if (ms.data) setSchedules(ms.data as MaintenanceSchedule[]);
     if (vh.data) setVehicles(vh.data);
     if (sc.data) setContracts(sc.data as SaleContract[]);
+
+    // Try to fetch maintenance schedules (table might not exist)
+    try {
+      const { data: ms } = await supabase
+        .from('maintenance_schedules')
+        .select('*, vehicle:vehicles(*), contract:sale_contracts(*)')
+        .order('scheduled_date', { ascending: true });
+      if (ms) setSchedules(ms as MaintenanceSchedule[]);
+    } catch (_) {}
+    
     setLoading(false);
   }, []);
 

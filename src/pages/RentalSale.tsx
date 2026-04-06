@@ -4,12 +4,12 @@ import {
   ShoppingCart, Search, Plus, X, Save, Loader2, CheckCircle2, AlertCircle,
   MessageCircle, Receipt, ChevronDown, ChevronUp, Eye, Trash2, Edit,
   Bell, TrendingUp, Clock, DollarSign, AlertTriangle, FileText,
-  CalendarDays, CreditCard, BadgeCheck, Send, RotateCcw,
+  CalendarDays, CreditCard, BadgeCheck, Send, RotateCcw, Repeat, Car
 } from 'lucide-react';
 import { format, addWeeks, parseISO, isPast, isToday } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { generateReceiptPDF } from '../lib/receiptPDF';
-import type { SaleContract, SaleInstallment, Client, Vehicle, SystemSettings } from '../types';
+import type { SaleContract, SaleInstallment, Client, Vehicle, SystemSettings, ContractSubstitution } from '../types';
 
 // ── helpers ────────────────────────────────────────────────────────────────
 
@@ -79,6 +79,10 @@ const RentalSale: React.FC = () => {
     notes: '',
   });
 
+  // substitution modal
+  const [isSubOpen, setIsSubOpen] = useState(false);
+  const [subForm, setSubForm] = useState({ substitute_vehicle_id: '', reason: '' });
+
   // ── Computed ──
   const remaining = form.sale_price - form.down_payment;
   const installmentValue = form.installments > 0 ? remaining / form.installments : 0;
@@ -95,7 +99,22 @@ const RentalSale: React.FC = () => {
       supabase.from('vehicles').select('*').order('model'),
       supabase.from('settings').select('*').single(),
     ]);
-    if (sc.data) setContracts(sc.data as SaleContract[]);
+    if (sc.data) {
+      let contractsData = sc.data as SaleContract[];
+      // Try to load substitutions separately (table may not exist yet)
+      try {
+        const { data: subs } = await supabase
+          .from('contract_substitutions')
+          .select('*, substitute_vehicle:vehicles(*)');
+        if (subs) {
+          contractsData = contractsData.map(c => ({
+            ...c,
+            substitutions: subs.filter(s => s.contract_id === c.id) as ContractSubstitution[],
+          }));
+        }
+      } catch (_) { /* table not created yet — silently ignore */ }
+      setContracts(contractsData);
+    }
     if (cl.data) setClients(cl.data);
     if (vh.data) setVehicles(vh.data);
     if (st.data) setSettings(st.data as SystemSettings);
@@ -107,6 +126,73 @@ const RentalSale: React.FC = () => {
   const showToast = (type: 'success' | 'error', msg: string) => {
     setToast({ type, msg });
     setTimeout(() => setToast(null), 3500);
+  };
+
+  // ── Save Substitution ──
+  const handleSaveSubstitution = async () => {
+    if (!selectedContract || !subForm.substitute_vehicle_id || !subForm.reason.trim()) {
+      showToast('error', 'Preencha o veículo reserva e o motivo.'); return;
+    }
+    // close any open substitution first
+    const openSub = (selectedContract.substitutions ?? []).find(s => !s.end_date);
+    if (openSub) {
+      await supabase.from('contract_substitutions').update({ end_date: new Date().toISOString() }).eq('id', openSub.id);
+      await supabase.from('vehicles').update({ status: 'available' }).eq('id', openSub.substitute_vehicle_id);
+    }
+    const { error } = await supabase.from('contract_substitutions').insert([{
+      contract_id: selectedContract.id,
+      substitute_vehicle_id: subForm.substitute_vehicle_id,
+      reason: subForm.reason,
+    }]);
+    if (error) { showToast('error', error.message); return; }
+    await supabase.from('vehicles').update({ status: 'rented' }).eq('id', subForm.substitute_vehicle_id);
+    showToast('success', 'Veículo reserva alocado com sucesso!');
+    setIsSubOpen(false);
+    setSubForm({ substitute_vehicle_id: '', reason: '' });
+    await fetchData();
+    // re-open detail with refreshed data
+    const { data: refreshed } = await supabase
+      .from('sale_contracts')
+      .select('*, client:clients(*), vehicle:vehicles(*), installment_records:sale_installments(*)')
+      .eq('id', selectedContract.id)
+      .single();
+    
+    if (refreshed) {
+      const contract = refreshed as SaleContract;
+      try {
+        const { data: subs } = await supabase
+          .from('contract_substitutions')
+          .select('*, substitute_vehicle:vehicles(*)')
+          .eq('contract_id', contract.id);
+        if (subs) contract.substitutions = subs as ContractSubstitution[];
+      } catch (_) {}
+      setSelectedContract(contract);
+    }
+  };
+
+  const handleEndSubstitution = async (sub: ContractSubstitution) => {
+    if (!confirm('Encerrar esta substituição? O veículo reserva voltará a ficar disponível.')) return;
+    await supabase.from('contract_substitutions').update({ end_date: new Date().toISOString() }).eq('id', sub.id);
+    await supabase.from('vehicles').update({ status: 'available' }).eq('id', sub.substitute_vehicle_id);
+    showToast('success', 'Substituição encerrada!');
+    await fetchData();
+    const { data: refreshed } = await supabase
+      .from('sale_contracts')
+      .select('*, client:clients(*), vehicle:vehicles(*), installment_records:sale_installments(*)')
+      .eq('id', selectedContract!.id)
+      .single();
+    
+    if (refreshed) {
+      const contract = refreshed as SaleContract;
+      try {
+        const { data: subs } = await supabase
+          .from('contract_substitutions')
+          .select('*, substitute_vehicle:vehicles(*)')
+          .eq('contract_id', contract.id);
+        if (subs) contract.substitutions = subs as ContractSubstitution[];
+      } catch (_) {}
+      setSelectedContract(contract);
+    }
   };
 
   // ── Create contract + installments ──
@@ -312,12 +398,23 @@ const RentalSale: React.FC = () => {
       
       // refresh detail panel
       if (selectedContract?.id === contractId) {
-        const { data } = await supabase
+        const { data: refreshed } = await supabase
           .from('sale_contracts')
           .select('*, client:clients(*), vehicle:vehicles(*), installment_records:sale_installments(*)')
           .eq('id', contractId)
           .single();
-        if (data) setSelectedContract(data as SaleContract);
+        
+        if (refreshed) {
+          const contract = refreshed as SaleContract;
+          try {
+            const { data: subs } = await supabase
+              .from('contract_substitutions')
+              .select('*, substitute_vehicle:vehicles(*)')
+              .eq('contract_id', contract.id);
+            if (subs) contract.substitutions = subs as ContractSubstitution[];
+          } catch (_) {}
+          setSelectedContract(contract);
+        }
       }
     }
     setPaying(false);
@@ -347,8 +444,8 @@ const RentalSale: React.FC = () => {
   const sendWhatsApp = (contract: SaleContract, installment?: SaleInstallment) => {
     const phone = contract.client?.phone?.replace(/\D/g, '');
     const msg = installment
-      ? `Olá ${contract.client?.name}! 👋\n\nSua parcela ${installment.installment_number}/${contract.installments} de ${currency(installment.amount)} vence em ${format(parseISO(installment.due_date), 'dd/MM/yyyy')}.\n\nItabaiana Loc – Aluguel com Intenção de Venda`
-      : `Olá ${contract.client?.name}! 👋\n\nSeu contrato de *${contract.vehicle?.model}* está em dia. Valor total: ${currency(contract.sale_price)}.\n\nItabaiana Loc`;
+      ? `Olá ${contract.client?.name}! 👋\n\nSua parcela ${installment.installment_number}/${contract.installments} de ${currency(installment.amount)} vence em ${format(parseISO(installment.due_date), 'dd/MM/yyyy')}.\n\nNexusloc – Venda-Aluguel`
+      : `Olá ${contract.client?.name}! 👋\n\nSeu contrato de *${contract.vehicle?.model}* está em dia. Valor total: ${currency(contract.sale_price)}.\n\nNexusloc`;
     window.open(`https://wa.me/55${phone}?text=${encodeURIComponent(msg)}`, '_blank');
   };
 
@@ -565,9 +662,18 @@ const RentalSale: React.FC = () => {
                   {selectedContract.vehicle?.model} ({selectedContract.vehicle?.plate})
                 </p>
               </div>
-              <button onClick={() => setIsDetailOpen(false)} className="text-slate-400 hover:text-slate-900 p-1">
-                <X size={24} />
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => { setIsSubOpen(true); setSubForm({ substitute_vehicle_id: '', reason: '' }); }}
+                  className="flex items-center gap-1.5 px-3 py-2 bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold rounded-xl transition-all shadow-md shadow-amber-500/20"
+                  title="Alocar Veículo Reserva"
+                >
+                  <Repeat size={14} /> Reserva
+                </button>
+                <button onClick={() => setIsDetailOpen(false)} className="text-slate-400 hover:text-slate-900 p-1">
+                  <X size={24} />
+                </button>
+              </div>
             </div>
 
             {/* Body */}
@@ -663,6 +769,115 @@ const RentalSale: React.FC = () => {
                       );
                     })}
                 </div>
+              </div>
+
+              {/* Substitution History */}
+              {(selectedContract.substitutions ?? []).length > 0 && (
+                <div>
+                  <h4 className="text-base font-extrabold text-slate-900 mb-3 flex items-center gap-2">
+                    <Repeat size={18} className="text-amber-500" />
+                    Histórico de Substituições
+                  </h4>
+                  <div className="space-y-2">
+                    {(selectedContract.substitutions ?? [])
+                      .sort((a, b) => new Date(b.start_date).getTime() - new Date(a.start_date).getTime())
+                      .map(sub => {
+                        const isActive = !sub.end_date;
+                        return (
+                          <div key={sub.id} className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl border ${isActive ? 'bg-amber-50 border-amber-200' : 'bg-slate-50 border-slate-100'}`}>
+                            <div className="flex items-start gap-3">
+                              <div className={`p-2 rounded-xl shrink-0 ${isActive ? 'bg-amber-500 text-white' : 'bg-slate-200 text-slate-500'}`}>
+                                <Car size={16} />
+                              </div>
+                              <div>
+                                <p className="text-sm font-bold text-slate-800">
+                                  {sub.substitute_vehicle?.model}
+                                  <span className="ml-2 text-xs font-black text-slate-500">{sub.substitute_vehicle?.plate}</span>
+                                </p>
+                                <p className="text-xs text-slate-500 mt-0.5">{sub.reason}</p>
+                                <p className="text-[10px] text-slate-400 mt-1">
+                                  Início: {format(new Date(sub.start_date), 'dd/MM/yyyy HH:mm')}
+                                  {sub.end_date && ` · Fim: ${format(new Date(sub.end_date), 'dd/MM/yyyy HH:mm')}`}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2 shrink-0">
+                              {isActive ? (
+                                <>
+                                  <span className="px-2.5 py-1 bg-amber-100 text-amber-700 text-[10px] font-black uppercase rounded-full">Em uso</span>
+                                  <button
+                                    onClick={() => handleEndSubstitution(sub)}
+                                    className="flex items-center gap-1 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition-all"
+                                  >
+                                    <RotateCcw size={12} /> Encerrar
+                                  </button>
+                                </>
+                              ) : (
+                                <span className="px-2.5 py-1 bg-emerald-100 text-emerald-700 text-[10px] font-black uppercase rounded-full">Concluída</span>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Substitution Modal ── */}
+      {isSubOpen && selectedContract && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-900/70 backdrop-blur-sm p-4">
+          <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden">
+            <div className="p-6 border-b border-slate-100 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-amber-100 text-amber-600 rounded-xl"><Repeat size={18} /></div>
+                <div>
+                  <h3 className="text-lg font-extrabold text-slate-900">Alocar Veículo Reserva</h3>
+                  <p className="text-xs text-slate-400 mt-0.5">Moto principal: <span className="font-bold">{selectedContract.vehicle?.model} ({selectedContract.vehicle?.plate})</span></p>
+                </div>
+              </div>
+              <button onClick={() => setIsSubOpen(false)} className="text-slate-400 hover:text-slate-900"><X size={22} /></button>
+            </div>
+            <div className="p-6 space-y-5">
+              <div className="bg-amber-50 border border-amber-100 rounded-2xl p-4">
+                <p className="text-xs font-black uppercase text-amber-600 mb-1">⚠️ Importante</p>
+                <p className="text-xs text-amber-800">O contrato original continua cobrando normalmente. O registro da reserva garante rastreabilidade jurídica caso apareçam multas durante o período.</p>
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-sm font-semibold text-slate-700">Veículo Reserva *</label>
+                <select
+                  value={subForm.substitute_vehicle_id}
+                  onChange={e => setSubForm({ ...subForm, substitute_vehicle_id: e.target.value })}
+                  className="input-field"
+                >
+                  <option value="">Selecione o veículo disponível...</option>
+                  {vehicles
+                    .filter(v => v.status === 'available' && v.id !== selectedContract.vehicle_id)
+                    .map(v => (
+                      <option key={v.id} value={v.id}>{v.model} ({v.plate})</option>
+                    ))}
+                </select>
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-sm font-semibold text-slate-700">Motivo / Descrição *</label>
+                <textarea
+                  value={subForm.reason}
+                  onChange={e => setSubForm({ ...subForm, reason: e.target.value })}
+                  placeholder="Ex: Motor com problema grave, entrada na oficina por 7 dias para substituição de retentores..."
+                  className="input-field min-h-[90px]"
+                />
+              </div>
+              <div className="flex gap-3 pt-1">
+                <button onClick={() => setIsSubOpen(false)} className="btn-secondary flex-1">Cancelar</button>
+                <button
+                  onClick={handleSaveSubstitution}
+                  className="btn-primary flex-1 bg-amber-500 hover:bg-amber-600 shadow-lg shadow-amber-500/20"
+                >
+                  <Repeat size={16} /> Alocar Reserva
+                </button>
               </div>
             </div>
           </div>
