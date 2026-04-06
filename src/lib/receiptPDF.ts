@@ -129,7 +129,7 @@ export const generateReceiptPDF = async ({ installment, contract, settings }: Re
   doc.rect(0, H - 10, W, 10, 'F');
   doc.setFontSize(7);
   doc.setTextColor(...GRAY);
-  doc.text(`Gerado por NexusLoc em ${format(new Date(), 'dd/MM/yyyy HH:mm')}`, W / 2, H - 4, { align: 'center' });
+  doc.text(`Gerado por Itabaiana Loc em ${format(new Date(), 'dd/MM/yyyy HH:mm')}`, W / 2, H - 4, { align: 'center' });
 
   const fileName = `recibo_${installment.installment_number}_${clientName.replace(/\s+/g, '_')}.pdf`;
   doc.save(fileName);

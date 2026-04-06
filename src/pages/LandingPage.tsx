@@ -20,9 +20,13 @@ import {
   CheckCircle,
   MessageCircle,
   Share2,
+  Star,
+  Sparkles,
+  Bike,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import type { Vehicle } from '../types';
+import Navbar from '../components/Navbar';
 
 // ── Hero Slides Data ──────────────────────────────────────────────────────────
 const HERO_SLIDES = [
@@ -55,7 +59,6 @@ const LandingPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [activeSlide, setActiveSlide] = useState(0);
   const [isScrolled, setIsScrolled] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // WhatsApp & Scroll state
   const [waFormOpen, setWaFormOpen] = useState(false);
@@ -67,7 +70,7 @@ const LandingPage: React.FC = () => {
     e.preventDefault();
     const text = `Olá, me chamo *${waData.name}*.\nTenho interesse em: *${waData.interest}*.\n\n${waData.message}`;
     const encoded = encodeURIComponent(text);
-    window.open(`https://wa.me/5579999990000?text=${encoded}`, '_blank');
+    window.open(`https://wa.me/5579999641398?text=${encoded}`, '_blank');
     setWaFormOpen(false);
   };
 
@@ -85,7 +88,7 @@ const LandingPage: React.FC = () => {
       document.head.appendChild(meta);
     }
 
-    // Scroll listener for navbar
+    // Scroll listener for buttons
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 50);
     };
@@ -118,106 +121,64 @@ const LandingPage: React.FC = () => {
   const prevSlide = () => setActiveSlide((activeSlide - 1 + HERO_SLIDES.length) % HERO_SLIDES.length);
 
   return (
-    <div className="bg-slate-50 min-h-screen font-sans">
-      
-      {/* ── Desktop/Mobile Navbar ─────────────────────────────────────────────── */}
-      <nav className={`fixed top-0 left-0 w-full z-50 transition-all duration-500 py-4 px-6 md:px-12 flex justify-between items-center ${isScrolled ? 'bg-white/80 backdrop-blur-xl shadow-xl shadow-slate-200/50 scale-100 mt-0' : 'bg-transparent mt-2'}`}>
-        <div className="flex items-center gap-4">
-           <img src="/logo.png" alt="Itabaiana Loc" className="h-10 md:h-14 w-auto object-contain drop-shadow-sm" />
-        </div>
-
-        <div className="hidden md:flex items-center gap-10">
-          {['Inicio', 'Frota', 'Quem Somos', 'Planos', 'Contato'].map(item => (
-            <a key={item} href={`#${item.toLowerCase().replace(' ', '-')}`} className={`text-sm font-black uppercase tracking-widest transition-colors hover:text-indigo-600 ${isScrolled ? 'text-slate-600' : 'text-white'}`}>
-              {item}
-            </a>
-          ))}
-          <Link to="/login" className="px-8 py-3.5 bg-indigo-600 text-white rounded-2xl text-xs font-black uppercase tracking-widest shadow-xl shadow-indigo-500/30 hover:bg-indigo-700 active:scale-95 transition-all">
-            Painel Admin
-          </Link>
-        </div>
-
-        {/* Mobile Hamburger */}
-        <div className="md:hidden flex items-center">
-          <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className={`p-3 rounded-2xl shadow-sm transition-all flex items-center justify-center ${isScrolled ? 'bg-indigo-50 text-indigo-600' : 'bg-white/20 backdrop-blur-md text-white'}`}>
-             {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
-          </button>
-        </div>
-      </nav>
-
-      {/* Mobile Menu Dropdown */}
-      <AnimatePresence>
-        {mobileMenuOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="md:hidden fixed top-24 left-4 right-4 bg-white/95 backdrop-blur-xl shadow-2xl rounded-3xl p-6 z-40 border border-slate-100 flex flex-col gap-4"
-          >
-            {['Inicio', 'Frota', 'Quem Somos', 'Planos', 'Contato'].map(item => (
-              <a 
-                onClick={() => setMobileMenuOpen(false)}
-                key={item} 
-                href={`#${item.toLowerCase().replace(' ', '-')}`} 
-                className="text-lg font-black uppercase tracking-widest text-slate-700 hover:text-indigo-600 py-2 border-b border-slate-50 last:border-0"
-              >
-                {item}
-              </a>
-            ))}
-            <Link onClick={() => setMobileMenuOpen(false)} to="/login" className="mt-4 py-4 bg-indigo-600 text-white flex items-center justify-center gap-2 rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-indigo-500/30">
-              <Store size={20} />
-              Painel Admin
-            </Link>
-          </motion.div>
-        )}
-      </AnimatePresence>
+    <div className="bg-[#f8fafc] min-h-screen font-sans selection:bg-indigo-100 selection:text-indigo-900">
+      <Navbar />
 
       {/* ── Hero Slider ─────────────────────────────────────────────────────── */}
-      <section id="inicio" className="relative h-screen min-h-[600px] w-full overflow-hidden bg-slate-900">
+      <section id="inicio" className="relative h-screen min-h-[700px] w-full overflow-hidden bg-[#020617]">
         <AnimatePresence mode="wait">
           <motion.div
             key={activeSlide}
-            initial={{ opacity: 0, scale: 1.1 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 1.05 }}
-            transition={{ duration: 1.5, ease: [0.19, 1, 0.22, 1] }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 1.2, ease: "easeInOut" }}
             className="absolute inset-0"
           >
-            {/* Background Image */}
-            <div 
-              className="absolute inset-0 bg-cover bg-center transition-transform duration-[10000ms] ease-linear scale-110"
+            {/* Background Image with Zoom Effect */}
+            <motion.div 
+              initial={{ scale: 1.2 }}
+              animate={{ scale: 1 }}
+              transition={{ duration: 10, ease: "linear" }}
+              className="absolute inset-0 bg-cover bg-center"
               style={{ backgroundImage: `url(${HERO_SLIDES[activeSlide].image})` }}
             />
-            {/* Overlay Gradient for contrast */}
-            <div className="absolute inset-0 bg-black/40" />
-            <div className="absolute inset-0 bg-gradient-to-r from-slate-900/95 via-slate-900/60 to-transparent" />
-            <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent opacity-90" />
             
-            {/* Content */}
-            <div className="relative h-full container mx-auto px-6 md:px-12 flex flex-col justify-center items-start pt-16">
+            {/* Elegant Overlays */}
+            <div className="absolute inset-0 bg-gradient-to-r from-[#020617] via-[#020617]/40 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#020617] via-transparent to-transparent opacity-80" />
+            
+            {/* Content Container */}
+            <div className="relative h-full container mx-auto px-6 md:px-12 flex flex-col justify-center items-start pt-20 pb-28 md:pb-0">
               <motion.div
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.5, duration: 1 }}
-                className="max-w-3xl w-full"
+                initial={{ opacity: 0, x: -50 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.3, duration: 1, ease: [0.16, 1, 0.3, 1] }}
+                className="max-w-4xl w-full"
               >
-                <span className="inline-block px-3 md:px-4 py-1.5 md:py-2 bg-white/10 backdrop-blur-md border border-white/20 text-indigo-300 rounded-full text-[9px] md:text-[10px] font-black uppercase tracking-[0.3em] mb-4 md:mb-6 shadow-2xl">
-                  Itabaiana Loc · Aluguel & Vendas
-                </span>
-                <h1 className="text-4xl md:text-6xl lg:text-[4.5rem] font-black text-white leading-[1.1] md:leading-[1.05] tracking-tight mb-5 md:mb-6 max-w-2xl drop-shadow-2xl">
+                <div className="flex items-center gap-3 mb-6 sm:mb-8">
+                  <div className="h-[2px] w-12 bg-indigo-500" />
+                  <span className="text-white font-black uppercase tracking-[0.4em] text-[10px] sm:text-[10px] drop-shadow-sm leading-tight">
+                    Premium Experience · Itabaiana Loc
+                  </span>
+                </div>
+
+                <h1 className="text-[3.5rem] leading-[1] sm:text-7xl md:text-9xl lg:text-[8rem] font-display font-black text-white sm:leading-[0.9] tracking-tight mb-4 sm:mb-8 drop-shadow-2xl">
                   {HERO_SLIDES[activeSlide].title}
                 </h1>
-                <p className="text-base md:text-xl text-slate-200/90 font-medium mb-8 md:mb-10 max-w-xl leading-relaxed drop-shadow-lg">
+
+                <p className="text-lg sm:text-xl md:text-2xl text-slate-300/90 font-medium mb-8 sm:mb-12 max-w-[90%] sm:max-w-2xl leading-relaxed drop-shadow-md">
                   {HERO_SLIDES[activeSlide].subtitle}
                 </p>
-                <div className="flex flex-col sm:flex-row gap-3 md:gap-5 w-full sm:w-auto">
-                  <a href={HERO_SLIDES[activeSlide].href || '#planos'} className="px-6 py-4 md:px-10 md:py-5 bg-white text-indigo-900 rounded-[30px] font-black uppercase text-[11px] md:text-xs tracking-widest shadow-2xl shadow-indigo-900/50 hover:bg-slate-100 active:scale-95 transition-all text-center flex items-center justify-center gap-2">
+
+                <div className="flex flex-col sm:flex-row gap-3 sm:gap-5 w-[90%] sm:w-auto relative z-20">
+                  <a href={HERO_SLIDES[activeSlide].href || '#planos'} className="h-14 sm:h-16 px-6 sm:px-12 bg-white text-slate-900 rounded-xl sm:rounded-2xl font-black uppercase text-[11px] tracking-[0.2em] shadow-[0_20px_40px_-10px_rgba(255,255,255,0.2)] hover:bg-slate-100 hover:-translate-y-1 active:scale-95 transition-all text-center flex items-center justify-center gap-3 group w-full sm:w-auto">
                     {HERO_SLIDES[activeSlide].cta}
-                    <ArrowRight size={16} />
+                    <ArrowRight size={16} className="transition-transform group-hover:translate-x-1 sm:w-[18px] sm:h-[18px]" />
                   </a>
-                  <a href="https://wa.me/5579999641398?text=Olá, estava no site e me interessei muito pela Assinatura da CG 160!" target="_blank" className="px-6 py-4 md:px-10 md:py-5 bg-indigo-600/90 backdrop-blur-md text-white rounded-[30px] font-black uppercase text-[11px] md:text-xs tracking-widest shadow-2xl shadow-indigo-900/50 hover:bg-indigo-600 active:scale-95 transition-all flex items-center justify-center gap-2">
-                    <Phone size={16} />
-                    WhatsApp
+                  <a href={`https://wa.me/5579999641398?text=${encodeURIComponent("Olá! Estou no site e gostaria de falar sobre a assinatura da CG 160.")}`} target="_blank" className="h-14 sm:h-16 px-6 sm:px-12 bg-white/5 backdrop-blur-xl border border-white/20 text-white rounded-xl sm:rounded-2xl font-black uppercase text-[11px] tracking-[0.2em] hover:bg-white/10 active:scale-95 transition-all flex items-center justify-center gap-3 group w-full sm:w-auto">
+                    <Phone size={16} className="transition-transform group-hover:rotate-12 sm:w-[18px] sm:h-[18px]" />
+                    Atendimento VIP
                   </a>
                 </div>
               </motion.div>
@@ -225,133 +186,146 @@ const LandingPage: React.FC = () => {
           </motion.div>
         </AnimatePresence>
 
-        {/* Slider Controls */}
-        <div className="hidden md:flex absolute right-6 md:right-12 bottom-24 md:bottom-32 gap-4 z-10">
-          <button onClick={prevSlide} className="p-4 bg-white/10 backdrop-blur-xl border border-white/20 text-white rounded-full hover:bg-white hover:text-indigo-900 transition-all active:scale-90">
-            <ChevronLeft size={24} />
-          </button>
-          <button onClick={nextSlide} className="p-4 bg-white/10 backdrop-blur-xl border border-white/20 text-white rounded-full hover:bg-white hover:text-indigo-900 transition-all active:scale-90">
-            <ChevronRight size={24} />
-          </button>
+        {/* Slider Navigation Bar */}
+        <div className="absolute bottom-16 left-6 md:left-12 flex items-center gap-6 z-10 w-[calc(100%-3rem)] md:w-auto">
+          <div className="flex gap-4">
+             {HERO_SLIDES.map((_, i) => (
+               <button 
+                key={i}
+                onClick={() => setActiveSlide(i)}
+                className={`h-1.5 transition-all duration-500 rounded-full ${activeSlide === i ? 'w-12 bg-indigo-500' : 'w-6 bg-white/20 hover:bg-white/40'}`}
+               />
+             ))}
+          </div>
         </div>
 
-        {/* Progress bar */}
-        <div className="absolute bottom-0 left-0 w-full h-1 bg-white/10 z-10">
-          <motion.div 
-            key={activeSlide}
-            initial={{ width: 0 }}
-            animate={{ width: '100%' }}
-            transition={{ duration: 6, ease: 'linear' }}
-            className="h-full bg-indigo-500"
-          />
-        </div>
+        {/* Floating Scroll Badge */}
+        <motion.div 
+           animate={{ y: [0, 10, 0] }}
+           transition={{ duration: 2, repeat: Infinity }}
+           className="absolute bottom-12 right-12 hidden lg:flex flex-col items-center gap-2"
+        >
+          <div className="w-[1px] h-16 bg-gradient-to-b from-white to-transparent opacity-20" />
+          <span className="text-[9px] font-black uppercase tracking-[0.3em] text-white/40 [writing-mode:vertical-lr]">Scroll Down</span>
+        </motion.div>
       </section>
 
-      {/* ── Stats / Trust Section ────────────────────────────────────────────── */}
       <section className="relative -mt-20 z-20 px-6 md:px-12">
-        <div className="container mx-auto grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="container mx-auto grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
           {[
-            { icon: Zap, label: 'Rápido', text: 'Locação em minutos' },
-            { icon: ShieldCheck, label: 'Seguro', text: 'Seguro total incluso' },
-            { icon: Clock, label: 'Suporte', text: 'Atendimento 24/7' },
-            { icon: CheckCircle, label: 'Qualidade', text: 'Frota 0 KM' },
+            { icon: Zap, label: 'Performance', text: 'Frota atualizada' },
+            { icon: ShieldCheck, label: 'Segurança', text: 'Proteção total 24h' },
+            { icon: Users, label: 'Exclusivo', text: 'Assinatura Sob Medida' },
+            { icon: CheckCircle, label: 'Garantia', text: 'Qualidade Premium' },
           ].map((item, i) => (
             <motion.div
-              whileHover={{ y: -5 }}
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: i * 0.1 }}
+              whileHover={{ y: -5, backgroundColor: "rgba(255, 255, 255, 0.95)" }}
               key={i}
-              className="p-6 bg-white/90 backdrop-blur-2xl border border-white/50 rounded-[32px] shadow-2xl shadow-slate-200/50 flex flex-col items-center text-center"
+              className="p-8 bg-white/70 backdrop-blur-3xl border border-white/50 shadow-[0_20px_50px_-15px_rgba(0,0,0,0.03)] rounded-[32px] flex flex-col items-center text-center group cursor-default"
             >
-              <div className="h-12 w-12 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mb-4 border border-indigo-100 shadow-inner">
-                <item.icon size={20} className="stroke-[2.5]" />
+              <div className="h-14 w-14 bg-slate-50 text-slate-900 rounded-2xl flex items-center justify-center mb-6 shadow-sm border border-slate-100 group-hover:bg-slate-900 group-hover:text-white transition-all duration-500">
+                <item.icon size={22} className="stroke-[2]" />
               </div>
-              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">{item.label}</p>
-              <p className="text-sm font-bold text-slate-900 leading-tight">{item.text}</p>
+              <p className="text-[9px] font-bold font-display uppercase tracking-[0.3em] text-indigo-600 mb-2">{item.label}</p>
+              <p className="text-sm font-black font-display text-slate-900 leading-tight uppercase tracking-tight">{item.text}</p>
             </motion.div>
           ))}
         </div>
       </section>
 
       {/* ── Fleet Section ────────────────────────────────────────────────────── */}
-      <section id="frota" className="py-24 px-6 md:px-12 overflow-hidden">
+      <section id="frota" className="py-32 px-6 md:px-12">
         <div className="container mx-auto">
-          <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-6">
-            <div className="max-w-2xl">
-              <span className="text-indigo-600 font-black uppercase tracking-[0.2em] text-[10px] bg-indigo-50 px-3 py-1 rounded-full border border-indigo-100 mb-4 inline-block">Nossa Frota</span>
-              <h2 className="text-4xl md:text-6xl font-black text-slate-900 tracking-tighter leading-none mb-6">Disponíveis hoje</h2>
-              <p className="text-slate-500 font-medium text-lg leading-relaxed">Selecione o veículo ideal para sua necessidade. Desde compactos para o dia a dia até utilitários para seu negócio.</p>
+          <div className="flex flex-col md:flex-row justify-between items-end mb-20 gap-8">
+            <div className="max-w-3xl">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="h-1.5 w-1.5 bg-indigo-600 rounded-full" />
+                <span className="text-indigo-600 font-extrabold uppercase tracking-[0.2em] text-[10px]">Catálogo Premium</span>
+              </div>
+              <h2 className="text-6xl md:text-8xl font-display font-black text-slate-900 tracking-tighter leading-[0.85] mb-8">Veículos que<br/>Elevam o Nível.</h2>
+              <p className="text-slate-500 font-medium text-xl leading-relaxed">Cada veículo em nossa frota passa por um rigoroso processo de revisão para garantir que sua única preocupação seja o seu destino.</p>
             </div>
-            <a href="https://wa.me/557900000000" className="btn-secondary h-14 px-8 rounded-full flex items-center gap-3 active:scale-95 transition-all">
-              Ver Catálogo Completo
-              <ArrowRight size={18} />
-            </a>
+            <Link to="/catalogo" className="h-16 px-10 bg-slate-50 text-slate-900 border border-slate-200 rounded-full font-black uppercase text-[11px] tracking-widest hover:bg-indigo-600 hover:text-white hover:border-indigo-600 transition-all active:scale-95 flex items-center gap-3 group">
+              Explorar Catálogo
+              <ArrowRight size={18} className="transition-transform group-hover:translate-x-1" />
+            </Link>
           </div>
 
           {loading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
               {[...Array(4)].map((_, i) => (
-                <div key={i} className="h-[420px] rounded-[40px] bg-slate-100 animate-pulse" />
+                <div key={i} className="h-[450px] rounded-[48px] bg-slate-100 animate-pulse" />
               ))}
             </div>
           ) : vehicles.length === 0 ? (
-            <div className="text-center py-20 px-6 bg-slate-50 rounded-[40px] border border-slate-100 max-w-2xl mx-auto shadow-sm">
-               <Car size={64} className="mx-auto text-indigo-300 mb-6" />
-               <p className="text-xl font-black text-slate-800 tracking-tight mb-2">Renovação de Frota</p>
-               <p className="text-slate-500 font-medium">
-                 No momento, todos os nossos veículos deste catálogo estão locados ou em preparação. Fale com um especialista para reservas futuras.
+            <div className="text-center py-24 px-8 bg-white/50 backdrop-blur-sm rounded-[60px] border border-slate-100 max-w-3xl mx-auto shadow-sm">
+               <div className="h-24 w-24 bg-indigo-50 text-indigo-200 rounded-full flex items-center justify-center mx-auto mb-8">
+                 <Car size={48} strokeWidth={1} />
+               </div>
+               <h3 className="text-3xl font-display font-black text-slate-900 mb-4 tracking-tight">Frota em Renovação</h3>
+               <p className="text-slate-500 font-medium text-lg leading-relaxed mb-10 max-w-lg mx-auto">
+                 Estamos atualizando nosso estoque com modelos 2024/2025. Enquanto isso, consulte disponibilidade imediata via WhatsApp.
                </p>
-               <a href="https://wa.me/557900000000" target="_blank" className="inline-flex mt-8 px-8 py-4 bg-indigo-600 text-white rounded-[20px] font-black uppercase tracking-widest text-xs hover:bg-indigo-700 active:scale-95 transition-all shadow-xl shadow-indigo-600/30 focus:outline-none">
-                 Falar com Especialista
+               <a href="https://wa.me/5579999641398" target="_blank" className="h-16 px-12 bg-indigo-600 text-white rounded-full font-black uppercase tracking-widest text-[11px] hover:bg-indigo-700 shadow-2xl shadow-indigo-600/30 transition-all active:scale-95 flex items-center justify-center gap-3 mx-auto max-w-xs">
+                 Consultar Agora <MessageCircle size={18} />
                </a>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 md:gap-10">
               {vehicles.map((v) => (
                 <motion.div
                   key={v.id}
-                  whileHover={{ y: -10 }}
-                  className="group bg-white rounded-[40px] border border-slate-100 shadow-sm hover:shadow-2xl hover:shadow-indigo-500/10 transition-all duration-500 overflow-hidden flex flex-col"
+                  whileHover={{ y: -15 }}
+                  className="bg-white rounded-[50px] p-4 shadow-[0_40px_80px_-20px_rgba(0,0,0,0.05)] border border-slate-50 group transition-all duration-700 hover:shadow-[0_50px_100px_-20px_rgba(79,70,229,0.1)]"
                 >
-                  {/* Photo */}
-                  <div className="relative h-56 bg-slate-100 overflow-hidden">
+                  {/* Photo Container */}
+                  <div className="relative h-64 bg-slate-50 rounded-[40px] overflow-hidden mb-6">
                     {v.photos_urls && v.photos_urls.length > 0 ? (
-                      <img src={v.photos_urls[0]} alt={v.model} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                      <img src={v.photos_urls[0]} alt={v.model} className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-slate-200">
-                        <Car size={64} strokeWidth={1} />
+                        <Car size={72} strokeWidth={1} />
                       </div>
                     )}
-                    <div className="absolute top-4 left-4">
-                      <span className="px-3 py-1.5 bg-white/90 backdrop-blur-md rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-600 shadow-sm">
+                    <div className="absolute top-4 left-4 right-4 flex justify-between">
+                      <span className="px-5 py-2 bg-white/80 backdrop-blur-md rounded-full text-[9px] font-black uppercase tracking-widest text-indigo-600 shadow-sm border border-white">
                         {v.category}
                       </span>
+                      <div className="h-10 w-10 bg-white/40 backdrop-blur-md rounded-full flex items-center justify-center text-white border border-white/20 opacity-0 group-hover:opacity-100 transition-opacity">
+                         <Share2 size={16} />
+                      </div>
                     </div>
                   </div>
 
                   {/* Info */}
-                  <div className="p-8 flex-1 flex flex-col">
-                    <div className="mb-6">
-                       <h3 className="text-xl font-black text-slate-900 group-hover:text-indigo-600 transition-colors leading-tight mb-2 truncate">
-                        {v.model}
-                      </h3>
-                      <div className="flex gap-4">
-                        <span className="text-[10px] font-black uppercase text-slate-400 flex items-center gap-1">
-                          <Users size={12} /> 5 Lugares
-                        </span>
-                        <span className="text-[10px] font-black uppercase text-slate-400 flex items-center gap-1">
-                          <Clock size={12} /> Automático
-                        </span>
+                  <div className="px-6 pb-6">
+                    <h3 className="text-2xl font-black text-slate-900 mb-3 group-hover:text-indigo-600 transition-colors tracking-tight truncate">
+                      {v.model}
+                    </h3>
+                    <div className="flex gap-6 mb-8">
+                      <div className="flex items-center gap-2">
+                        <Users size={14} className="text-slate-400" />
+                        <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400">5 Lugares</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Zap size={14} className="text-slate-400" />
+                        <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400">Premium</span>
                       </div>
                     </div>
 
-                    <div className="mt-auto flex items-center justify-between pt-6 border-t border-slate-50">
+                    <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1 leading-none">Diária</p>
-                        <p className="text-2xl font-black text-indigo-600 tracking-tight leading-none">
-                          <span className="text-xs mr-1">R$</span>
-                          {Number(v.daily_rate).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-500 mb-1 leading-none">A partir de</p>
+                        <p className="text-2xl font-black text-slate-900 tracking-tighter leading-none">
+                          <span className="text-sm mr-1">R$</span>
+                          {Number(v.daily_rate).toLocaleString('pt-BR', { minimumFractionDigits: 0 })}
                         </p>
                       </div>
-                      <a href={`https://wa.me/557900000000?text=Olá! Gostaria de reservar o ${v.model} (${v.plate})`} target="_blank" className="h-14 w-14 bg-slate-900 text-white rounded-2xl flex items-center justify-center hover:bg-indigo-600 shadow-lg shadow-slate-900/10 active:scale-95 transition-all">
+                      <a href={`https://wa.me/5579999641398?text=${encodeURIComponent(`Olá! Vi o ${v.model} no site e gostaria de saber a disponibilidade.`)}`} target="_blank" className="h-14 w-14 bg-indigo-600 text-white rounded-full flex items-center justify-center hover:bg-slate-900 shadow-lg shadow-indigo-600/20 active:scale-95 transition-all">
                         <ArrowRight size={20} />
                       </a>
                     </div>
@@ -371,8 +345,8 @@ const LandingPage: React.FC = () => {
         <div className="container mx-auto">
           {/* Header */}
           <div className="flex flex-col items-center text-center mx-auto max-w-3xl mb-16 md:mb-20">
-            <span className="text-red-600 font-black uppercase tracking-[0.2em] text-[10px] bg-white px-4 py-1.5 rounded-full shadow-sm mb-4 inline-block">Assinatura de Motos</span>
-            <h2 className="text-4xl md:text-6xl font-black text-slate-900 tracking-tighter leading-[0.9] mb-6">Planos que vão<br/><span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-700 to-red-600">muito além!</span></h2>
+            <span className="text-red-600 font-bold font-display uppercase tracking-[0.2em] text-[10px] bg-white px-4 py-1.5 rounded-full shadow-sm mb-4 inline-block">Assinatura de Motos</span>
+            <h2 className="text-5xl md:text-8xl font-display font-black text-slate-900 tracking-tighter leading-[0.85] mb-6">Planos que vão<br/><span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-700 to-red-600">muito além!</span></h2>
             <p className="text-slate-500 font-medium text-lg leading-relaxed max-w-2xl px-4">Condições exclusivas para você trabalhar ou se deslocar sem preocupações. E o melhor: no final do plano, a moto é sua.</p>
           </div>
 
@@ -382,9 +356,9 @@ const LandingPage: React.FC = () => {
                <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl -mr-32 -mt-32 pointer-events-none"></div>
 
                <div className="relative z-10 w-full max-w-sm mx-auto md:mx-0">
-                 <h3 className="text-4xl md:text-[3.25rem] font-black uppercase tracking-tighter leading-[0.8] mb-6 text-red-500 drop-shadow-md">
-                   Aluguel<br />de Motos
-                 </h3>
+                  <h3 className="text-5xl md:text-[4rem] font-display font-black uppercase tracking-tighter leading-[0.8] mb-8 text-red-500 drop-shadow-md">
+                    Aluguel<br />de Motos
+                  </h3>
                  <div className="bg-white text-[#0c1e80] rounded-full py-4 px-6 md:px-8 inline-flex items-end gap-1 mb-8 shadow-2xl shadow-black/20 border-2 border-white/20 transform -rotate-2 hover:rotate-0 transition-all cursor-default relative z-20">
                     <p className="text-5xl md:text-[3.5rem] leading-none font-black tracking-tighter">
                       <span className="text-xl md:text-2xl font-bold align-top mt-1 inline-block">R$</span>330
@@ -422,7 +396,7 @@ const LandingPage: React.FC = () => {
               <div className="absolute bottom-0 right-0 w-full h-[60%] bg-white/5 skew-y-12 translate-y-20 origin-bottom-right pointer-events-none"></div>
 
               <div className="text-center z-10 relative mt-4 md:mt-0">
-                 <h3 className="text-5xl md:text-[4.5rem] font-black uppercase text-white tracking-tighter leading-[0.85] drop-shadow-xl">
+                 <h3 className="text-6xl md:text-[5.5rem] font-display font-black uppercase text-white tracking-tighter leading-[0.85] drop-shadow-2xl">
                    Você pode<br />ir muito<br />além!
                  </h3>
               </div>
@@ -452,84 +426,211 @@ const LandingPage: React.FC = () => {
         </div>
       </section>
 
-      {/* ── Who We Are / Purpose Section ──────────────────────────────────────── */}
-
-      <section id="quem-somos" className="py-24 px-6 md:px-12 bg-white rounded-[80px] my-12 mx-4 shadow-inner">
-        <div className="container mx-auto grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
-          <div className="relative">
-            <div className="aspect-[4/5] rounded-[60px] overflow-hidden shadow-2xl relative z-10 shadow-slate-300/50">
-               <img src="https://images.unsplash.com/photo-1560179707-f14e90ef3623?auto=format&fit=crop&q=80&w=1200" alt="Nosso Time" className="w-full h-full object-cover" />
-               <div className="absolute inset-0 bg-gradient-to-t from-indigo-900/60 to-transparent flex items-end p-12">
-                 <div className="bg-white/20 backdrop-blur-xl border border-white/30 rounded-[40px] p-8 text-white">
-                   <p className="text-3xl font-black mb-2 tracking-tighter">+10 Anos</p>
-                   <p className="text-xs font-black uppercase tracking-widest opacity-80">De história em Itabaiana</p>
-                 </div>
-               </div>
-            </div>
-            {/* Background Blob Decor */}
-            <div className="absolute -top-10 -left-10 w-40 h-40 bg-indigo-100 rounded-full blur-[80px]" />
-            <div className="absolute -bottom-10 -right-10 w-64 h-64 bg-amber-100 rounded-full blur-[100px]" />
-          </div>
-
-          <div className="flex flex-col">
-            <span className="text-indigo-600 font-black uppercase tracking-[0.2em] text-[10px] mb-4">Quem Somos</span>
-            <h2 className="text-4xl md:text-7xl font-black text-slate-900 tracking-tighter leading-none mb-8">Tradição em Locação e Venda.</h2>
-            <p className="text-lg text-slate-500 font-medium leading-relaxed mb-10">
-              A Itabaiana Loc nasceu para transformar o mercado de mobilidade no Sergipe. 
-              Somos mais que uma locadora, somos seus parceiros em viagens de lazer, negócios e até na realização do sonho do carro próprio através do nosso modelo exclusivo de aluguel por intenção de venda.
-            </p>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 mb-12">
-              <div className="p-8 bg-slate-50 rounded-[40px] border border-slate-100 transition-all hover:bg-indigo-50 hover:border-indigo-100">
-                <div className="h-12 w-12 bg-white text-indigo-600 rounded-2xl flex items-center justify-center mb-6 shadow-sm">
-                  <Store size={24} />
+      {/* ── Brand Story Section ─────────────────────────────────────────────── */}
+      <section id="quem-somos" className="py-28 px-6 md:px-12 bg-white relative overflow-hidden">
+        <div className="absolute top-0 left-0 w-full h-full pointer-events-none opacity-[0.03]" style={{ backgroundImage: 'radial-gradient(#4f46e5 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
+        
+        <div className="container mx-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-24 items-center">
+            <div className="relative order-2 lg:order-1">
+              <motion.div 
+                initial={{ opacity: 0, x: -30 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                className="relative z-10 rounded-[48px] overflow-hidden aspect-video md:aspect-[4/3] shadow-[0_40px_80px_-20px_rgba(0,0,0,0.1)] border border-slate-100"
+              >
+                <img src="/honda-titan-grey.png" alt="Nosso DNA" className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-1000" />
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-slate-900/10 to-transparent" />
+                <div className="absolute bottom-10 left-10 right-10">
+                   <p className="text-4xl font-black text-white tracking-tighter mb-2">DNA<br/>Imbatível.</p>
+                   <p className="text-slate-300 font-medium text-base max-w-xs">Excelência em cada detalhe da sua jornada por Sergipe.</p>
                 </div>
-                <h4 className="font-black text-slate-900 mb-3 uppercase tracking-widest text-sm">Nosso Propósito</h4>
-                <p className="text-sm text-slate-500 font-medium leading-relaxed">Descomplicar a vida das pessoas através de soluções de mobilidade flexíveis.</p>
-              </div>
-              <div className="p-8 bg-slate-50 rounded-[40px] border border-slate-100 transition-all hover:bg-amber-50 hover:border-amber-100">
-                <div className="h-12 w-12 bg-white text-amber-600 rounded-2xl flex items-center justify-center mb-6 shadow-sm">
-                  <ShieldCheck size={24} />
-                </div>
-                <h4 className="font-black text-slate-900 mb-3 uppercase tracking-widest text-sm">Nossos Valores</h4>
-                <p className="text-sm text-slate-500 font-medium leading-relaxed">Transparência, segurança e foco absoluto no sucesso do cliente.</p>
-              </div>
+              </motion.div>
+              
+              {/* Secondary Image for Editorial Look */}
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.8, y: 50 }}
+                whileInView={{ opacity: 1, scale: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.3 }}
+                className="absolute -bottom-10 -right-10 w-1/3 rounded-[24px] overflow-hidden aspect-square shadow-2xl border-4 border-white hidden lg:block"
+              >
+                <img src="https://images.unsplash.com/photo-1558981285-6f0c94958bb6?auto=format&fit=crop&q=80&w=600" alt="Moto Detail" className="w-full h-full object-cover" />
+              </motion.div>
             </div>
 
-            <a href="#contato" className="btn-primary h-16 rounded-[30px] flex items-center justify-center gap-3 active:scale-95 transition-all text-sm font-black w-full sm:w-auto px-12">
-              Conhecer Nossa História
-              <ArrowRight size={18} />
-            </a>
+            <div className="flex flex-col order-1 lg:order-2">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+              >
+                <div className="flex items-center gap-3 mb-8">
+                  <div className="h-1 w-12 bg-indigo-600 rounded-full" />
+                  <span className="text-indigo-600 font-black uppercase tracking-[0.4em] text-[11px]">Nossa Identidade</span>
+                </div>
+                <h2 className="text-5xl md:text-7xl font-black text-slate-900 tracking-tighter leading-[0.85] mb-8">Referência em<br/><span className="text-indigo-600">Mobilidade.</span></h2>
+                
+                <p className="text-xl text-slate-500 font-medium leading-relaxed mb-10 max-w-xl">
+                  A Itabaiana Loc nasceu da paixão por liberdade. Com mais de uma década de estrada em Sergipe, transformamos aluguéis em conquistas reais.
+                </p>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-10">
+                   <div className="space-y-6 group">
+                      <div className="h-16 w-16 bg-slate-50 text-indigo-600 rounded-3xl flex items-center justify-center border border-slate-100 group-hover:bg-indigo-600 group-hover:text-white transition-all duration-500">
+                        <CheckCircle size={32} />
+                      </div>
+                      <div>
+                        <h4 className="font-black text-slate-900 uppercase text-sm tracking-widest mb-3">Procedência</h4>
+                        <p className="text-base text-slate-500 font-medium leading-relaxed">Frota 100% revisada com histórico transparente de manutenção.</p>
+                      </div>
+                   </div>
+                   <div className="space-y-6 group">
+                      <div className="h-16 w-16 bg-slate-50 text-indigo-600 rounded-3xl flex items-center justify-center border border-slate-100 group-hover:bg-indigo-600 group-hover:text-white transition-all duration-500">
+                        <Users size={32} />
+                      </div>
+                      <div>
+                        <h4 className="font-black text-slate-900 uppercase text-sm tracking-widest mb-3">Compromisso</h4>
+                        <p className="text-base text-slate-500 font-medium leading-relaxed">Suporte humanizado 24h para que você nunca fique na mão.</p>
+                      </div>
+                   </div>
+                </div>
+              </motion.div>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* ── Call to Action ─────────────────────────────────────────────────── */}
-      <section className="py-32 px-6 md:px-12">
-        <div className="container mx-auto rounded-[60px] bg-slate-900 overflow-hidden relative shadow-2xl">
-          <div className="absolute inset-0 grayscale opacity-20 hover:opacity-30 transition-opacity">
+      {/* ── Testimonials Section (Horizontal Slider) ─────────────────────────── */}
+      <section className="py-40 px-6 md:px-12 bg-white relative overflow-hidden">
+        {/* Abstract Background Design Elements */}
+        <div className="absolute top-0 right-0 w-1/2 h-full bg-slate-50 skew-x-12 translate-x-1/2 pointer-events-none opacity-50" />
+        <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-indigo-50 rounded-full blur-[100px] pointer-events-none" />
+        
+        <div className="container mx-auto relative z-10">
+          <div className="text-center mb-24 max-w-3xl mx-auto">
+            <span className="text-red-600 font-bold font-display uppercase tracking-[0.3em] text-[10px] bg-red-50 px-4 py-1.5 rounded-full border border-red-100 mb-6 inline-block">Feedback dos Clientes</span>
+            <h2 className="text-6xl md:text-8xl font-display font-black text-slate-900 tracking-tighter leading-[0.85] mb-8">Vozes de Quem<br/><span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-700 to-red-600">Acredita.</span></h2>
+            <p className="text-slate-500 font-medium text-lg leading-relaxed px-4">Milhares de km rodados com segurança e a confiança de quem conhece o melhor de Itabaiana e Sergipe.</p>
+          </div>
+        </div>
+
+        {/* Carousel Container */}
+        <div className="relative overflow-hidden w-full py-10">
+          <motion.div 
+            animate={{ x: ["0%", "-100%"] }}
+            transition={{ 
+              duration: 80, 
+              repeat: Infinity, 
+              ease: "linear" 
+            }}
+            className="flex gap-8 w-max px-4"
+          >
+            {/* Doubling the items for an infinite seamless scroll effect */}
+            {[...Array(2)].map((_, loopIdx) => (
+              <div key={loopIdx} className="flex gap-8">
+                {[
+                  { name: "Marcos Oliveira", role: "Entregador", text: "A Itabaiana Loc facilitou minha vida. Com o aluguel semanal de 30 meses, hoje sinto que tenho uma oportunidade real de crescer. É o suporte que o trabalhador honesto precisa." },
+                  { name: "Juliana Santos", role: "Autônoma", text: "O plano de 30 meses para motos com pagamento semanal é perfeito. Cabe no bolso e me deu a liberdade que eu precisava para trabalhar por conta própria." },
+                  { name: "Ricardo Porto", role: "Empreendedor", text: "Excelente oportunidade para quem quer começar. O sistema de pagamento semanal facilita muito a organização e no fim dos 30 meses a moto é sua." },
+                  { name: "Ana Paula", role: "Vendedora", text: "Trabalho como entregadora e a Itabaiana Loc foi a única que realmente facilitou meu acesso a uma moto nova com pagamento semanal justo." },
+                  { name: "Tiago Mendes", role: "Motorista App", text: "Migrei para cá pelo plano de 30 meses. É a melhor forma de um trabalhador honesto conquistar seu veículo pagando semanalmente." },
+                  { name: "Fernanda Lima", role: "Entregas", text: "A Itabaiana Loc entende o trabalhador. Os planos semanais são acessíveis e dão a oportunidade que as pessoas precisam para mudar de vida." },
+                  { name: "Lucas Silva", role: "Logística", text: "Com a facilidade do pagamento semanal e o plano de 30 meses, consegui minha moto para trabalhar e sustentar minha família com tranquilidade." }
+                ].map((t, i) => (
+                  <div 
+                    key={i}
+                    className="w-[380px] p-12 bg-white border border-slate-100 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.05)] rounded-[60px] flex flex-col group hover:border-indigo-100 transition-all duration-500"
+                  >
+                    <div className="flex gap-1 mb-8 text-amber-400">
+                      {[...Array(5)].map((_, j) => <Star key={j} size={16} fill="currentColor" className="stroke-amber-400" />)}
+                    </div>
+                    <p className="text-xl text-slate-800 font-bold leading-relaxed mb-10 tracking-tight group-hover:text-indigo-900 transition-colors">"{t.text}"</p>
+                    <div className="flex items-center gap-5 mt-auto">
+                      <div className="h-16 w-16 bg-slate-900 text-white rounded-[24px] flex items-center justify-center font-display font-black text-xl shadow-xl shadow-slate-900/20">
+                        {t.name.charAt(0)}
+                      </div>
+                      <div>
+                        <p className="text-slate-900 font-display font-black uppercase tracking-widest text-[11px] mb-1">{t.name}</p>
+                        <p className="text-indigo-600 text-[10px] font-black uppercase tracking-[0.2em]">{t.role}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ))}
+          </motion.div>
+        </div>
+      </section>
+
+      <section className="py-24 px-6 md:px-12">
+        <div className="container mx-auto rounded-[60px] bg-slate-900 overflow-hidden relative shadow-2xl group">
+          <div className="absolute inset-0 grayscale opacity-10 group-hover:opacity-20 transition-opacity duration-1000 scale-110 group-hover:scale-100 transition-transform">
             <img src="https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?auto=format&fit=crop&q=100&w=1920" alt="Action" className="w-full h-full object-cover" />
           </div>
-          <div className="relative z-10 py-20 px-8 text-center flex flex-col items-center">
-            <h2 className="text-4xl md:text-7xl font-black text-white tracking-tighter leading-tight max-w-3xl mb-8">
-              Pronto para colocar as mãos no volante?
-            </h2>
-            <p className="text-slate-400 text-lg font-medium mb-12 max-w-xl">
-              Fale agora com um de nossos especialistas e saiba como podemos ajudar você hoje.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-6">
-               <a href="https://wa.me/557900000000" className="px-12 py-5 bg-indigo-600 text-white rounded-[30px] font-black uppercase text-sm tracking-widest shadow-2xl shadow-indigo-600/50 hover:bg-indigo-700 active:scale-95 transition-all">
-                 Iniciar Atendimento
-               </a>
-               <a href="#frota" className="px-12 py-5 bg-white text-slate-900 rounded-[30px] font-black uppercase text-sm tracking-widest hover:bg-slate-100 active:scale-95 transition-all">
-                 Ver Frota
-               </a>
-            </div>
+          <div className="relative z-10 py-24 px-8 text-center flex flex-col items-center">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+            >
+              <h2 className="text-5xl md:text-8xl font-black text-white tracking-tighter leading-[0.9] max-w-4xl mb-10">
+                Sua próxima<br/>conquista começa<br/><span className="text-indigo-500">agora mesmo.</span>
+              </h2>
+              <p className="text-slate-400 text-xl font-medium mb-16 max-w-xl mx-auto">
+                Fale agora com nosso time VIP e garanta as melhores condições de Sergipe.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-6 justify-center">
+                 <a href="https://wa.me/5579999641398" className="px-14 py-6 bg-indigo-600 text-white rounded-2xl font-black uppercase text-xs tracking-[0.2em] shadow-2xl shadow-indigo-600/50 hover:bg-indigo-700 active:scale-95 transition-all flex items-center justify-center gap-3">
+                   Mandar WhatsApp <MessageCircle size={18} />
+                 </a>
+                 <a href="#frota" className="px-14 py-6 bg-white text-slate-900 rounded-2xl font-black uppercase text-xs tracking-[0.2em] hover:bg-slate-100 active:scale-95 transition-all">
+                   Explorar Modelos
+                 </a>
+              </div>
+            </motion.div>
           </div>
         </div>
       </section>
 
-      {/* ── Footer ──────────────────────────────────────────────────────────── */}
+      {/* ── FAQ Section ─────────────────────────────────────────────────────── */}
+      <section className="py-32 px-6 md:px-12 bg-slate-50">
+        <div className="container mx-auto max-w-4xl">
+          <div className="text-center mb-20">
+            <span className="text-indigo-600 font-bold font-display uppercase tracking-[0.3em] text-[10px]">Dúvidas Frequentes</span>
+            <h2 className="text-5xl md:text-7xl font-display font-black text-slate-900 tracking-tighter mt-4">Papo Reto e<br/>Sincero.</h2>
+          </div>
+
+          <div className="space-y-6">
+            {[
+              { q: "Quais documentos preciso para alugar?", a: "Para locação diária, basta CNH definitiva (categoria A ou B) e comprovante de residência atualizado no seu nome." },
+              { q: "Como funciona o aluguel com intenção de compra?", a: "Você escolhe sua Honda 0km, paga uma parcela semanal de R$330 e após 30 meses de contrato adimplente, a moto é transferida para o seu nome sem custos adicionais de compra." },
+              { q: "O seguro cobre qualquer situação?", a: "Sim, nossos veículos possuem seguro total contra roubo, furto, colisão e danos a terceiros. Além de guincho 24h em todo estado de Sergipe." },
+              { q: "Posso trabalhar em aplicativos como iFood ou Uber?", a: "Com certeza! Nossos planos de assinatura são desenhados especialmente para quem deseja empreender e ter seu próprio veículo de trabalho." }
+            ].map((faq, i) => (
+              <motion.details 
+                key={i}
+                initial={{ opacity: 0, y: 10 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1 }}
+                className="group bg-white rounded-[32px] border border-slate-100 overflow-hidden shadow-sm hover:shadow-md transition-all cursor-pointer"
+              >
+                <summary className="flex items-center justify-between p-8 list-none">
+                  <h4 className="text-lg font-black text-slate-900 tracking-tight group-hover:text-indigo-600 transition-colors uppercase">{faq.q}</h4>
+                  <div className="h-10 w-10 bg-slate-50 rounded-full flex items-center justify-center transition-transform group-open:rotate-180">
+                    <ChevronRight size={20} className="text-slate-400" />
+                  </div>
+                </summary>
+                <div className="px-8 pb-8 text-slate-500 font-medium leading-relaxed">
+                  {faq.a}
+                </div>
+              </motion.details>
+            ))}
+          </div>
+        </div>
+      </section>
+
       <footer id="contato" className="bg-white/80 backdrop-blur-xl border-t border-slate-200 py-32 text-slate-800 px-6 md:px-12 relative z-20">
         <div className="container mx-auto grid grid-cols-1 md:grid-cols-4 gap-16">
           <div className="col-span-1 md:col-span-1">
@@ -548,17 +649,17 @@ const LandingPage: React.FC = () => {
           </div>
 
           <div>
-             <h4 className="font-black uppercase tracking-widest text-xs mb-8 text-slate-900">Navegação</h4>
+             <h4 className="font-bold font-display uppercase tracking-widest text-xs mb-8 text-slate-900">Navegação</h4>
              <ul className="space-y-4 font-bold text-slate-500">
                 <li><a href="#inicio" className="hover:text-indigo-600 transition-colors">Início</a></li>
                 <li><a href="#frota" className="hover:text-indigo-600 transition-colors">Frota</a></li>
+                <li><a href="#planos" className="hover:text-indigo-600 transition-colors">Planos</a></li>
                 <li><a href="#quem-somos" className="hover:text-indigo-600 transition-colors">Quem Somos</a></li>
-                <li><a href="#contato" className="hover:text-indigo-600 transition-colors">Contato</a></li>
              </ul>
           </div>
 
           <div>
-             <h4 className="font-black uppercase tracking-widest text-xs mb-8 text-slate-900">Legal</h4>
+             <h4 className="font-bold font-display uppercase tracking-widest text-xs mb-8 text-slate-900">Legal</h4>
              <ul className="space-y-4 font-bold text-slate-500">
                 <li><a href="#" className="hover:text-indigo-600 transition-colors">Privacidade</a></li>
                 <li><a href="#" className="hover:text-indigo-600 transition-colors">Termos de Uso</a></li>
@@ -567,16 +668,16 @@ const LandingPage: React.FC = () => {
           </div>
 
           <div>
-             <h4 className="font-black uppercase tracking-widest text-xs mb-8 text-slate-900">Localização</h4>
-             <p className="text-slate-500 font-medium mb-6 flex gap-3">
+             <h4 className="font-bold font-display uppercase tracking-widest text-xs mb-8 text-slate-900">Localização</h4>
+             <p className="text-slate-500 font-medium mb-6 flex gap-3 leading-relaxed">
                 <MapPin size={24} className="text-indigo-500 shrink-0" />
                 <div>
-                   Av. Principal, 123 - Centro<br />Itabaiana, SE - CEP: 00000-000
+                   Rua Itabaiana, 456 - Centro<br />Itabaiana, SE - CEP: 49500-000
                 </div>
              </p>
              <p className="text-slate-500 font-medium flex gap-3 items-center">
                 <Phone size={18} className="text-indigo-500" />
-                (79) 99999-0000
+                (79) 99964-1398
              </p>
           </div>
         </div>
@@ -584,12 +685,12 @@ const LandingPage: React.FC = () => {
         <div className="container mx-auto pt-20 mt-20 border-t border-slate-200 text-center flex flex-col items-center gap-4">
           <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">&copy; {new Date().getFullYear()} Itabaiana Loc. Todos os direitos reservados.</p>
           <a 
-            href="https://nexussofttech.com.br" 
+            href="#" 
             target="_blank" 
             rel="noopener noreferrer"
             className="flex items-center justify-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-slate-300 hover:text-indigo-600 transition-all group"
           >
-            Desenvolvido por <span className="underline decoration-indigo-200 underline-offset-4">Nexus Soft Tech</span>
+            Desenvolvido por <span className="underline decoration-indigo-200 underline-offset-4">Soft Tech</span>
           </a>
         </div>
       </footer>

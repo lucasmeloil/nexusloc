@@ -319,7 +319,7 @@ const RentalSale: React.FC = () => {
       
       // Notify via WhatsApp as well
       const phone = contract.client?.phone?.replace(/\D/g, '');
-      const msg = `✅ *COMPROVANTE DE PAGAMENTO*\n\nOlá *${contract.client?.name}*!\nRecebemos o pagamento da parcela *${inst.installment_number}/${contract.installments}* do seu contrato.\n\n💰 *Valor:* ${currency(inst.paid_amount || inst.amount)}\n📅 *Data:* ${format(new Date(inst.paid_at || ''), 'dd/MM/yyyy', { locale: ptBR })}\n\n_NexusLoc_`;
+      const msg = `✅ *COMPROVANTE DE PAGAMENTO*\n\nOlá *${contract.client?.name}*!\nRecebemos o pagamento da parcela *${inst.installment_number}/${contract.installments}* do seu contrato.\n\n💰 *Valor:* ${currency(inst.paid_amount || inst.amount)}\n📅 *Data:* ${format(new Date(inst.paid_at || ''), 'dd/MM/yyyy', { locale: ptBR })}\n\n_Itabaiana Loc_`;
       
       setTimeout(() => {
         if (window.confirm('Enviar comprovante pelo WhatsApp também?')) {
@@ -335,8 +335,8 @@ const RentalSale: React.FC = () => {
   const sendWhatsApp = (contract: SaleContract, installment?: SaleInstallment) => {
     const phone = contract.client?.phone?.replace(/\D/g, '');
     const msg = installment
-      ? `Olá ${contract.client?.name}! 👋\n\nSua parcela ${installment.installment_number}/${contract.installments} de ${currency(installment.amount)} vence em ${format(parseISO(installment.due_date), 'dd/MM/yyyy')}.\n\nNexusLoc – Aluguel com Intenção de Venda`
-      : `Olá ${contract.client?.name}! 👋\n\nSeu contrato de *${contract.vehicle?.model}* está em dia. Valor total: ${currency(contract.sale_price)}.\n\nNexusLoc`;
+      ? `Olá ${contract.client?.name}! 👋\n\nSua parcela ${installment.installment_number}/${contract.installments} de ${currency(installment.amount)} vence em ${format(parseISO(installment.due_date), 'dd/MM/yyyy')}.\n\nItabaiana Loc – Aluguel com Intenção de Venda`
+      : `Olá ${contract.client?.name}! 👋\n\nSeu contrato de *${contract.vehicle?.model}* está em dia. Valor total: ${currency(contract.sale_price)}.\n\nItabaiana Loc`;
     window.open(`https://wa.me/55${phone}?text=${encodeURIComponent(msg)}`, '_blank');
   };
 

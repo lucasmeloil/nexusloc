@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
+import { createClient } from '@supabase/supabase-js';
 import type { SystemSettings } from '../types';
 import {
   Building2,
@@ -90,7 +91,9 @@ const Settings: React.FC = () => {
   const [newAdminPassword, setNewAdminPassword] = useState('');
   const [creatingAdmin, setCreatingAdmin] = useState(false);
   
+  const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [updatingPassword, setUpdatingPassword] = useState(false);
   const [authMessage, setAuthMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
 
@@ -146,14 +149,31 @@ const Settings: React.FC = () => {
     setAuthMessage(null);
     
     try {
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email: newAdminEmail,
         password: newAdminPassword,
       });
 
       if (error) throw error;
       
-      setAuthMessage({ type: 'success', text: 'Convite enviado! O novo admin precisa confirmar o e-mail.' });
+      // Criar registro na tabela pública profiles para garantir persistência do admin
+      if (data.user) {
+        await supabase.from('profiles').insert({
+          id: data.user.id,
+          email: data.user.email || newAdminEmail,
+          role: 'admin'
+        });
+      }
+      
+      // Registrar ação no log de auditoria
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      await supabase.from('audit_logs').insert({
+        user_email: currentUser?.email || 'system',
+        action: 'admin_creation',
+        details: { new_admin_email: newAdminEmail }
+      });
+
+      setAuthMessage({ type: 'success', text: 'Admin criado com sucesso! O novo admin já pode acessar.' });
       setNewAdminEmail('');
       setNewAdminPassword('');
     } catch (error: any) {
@@ -163,31 +183,78 @@ const Settings: React.FC = () => {
     }
   };
 
-  const handleChangePassword = async (e: React.FormEvent) => {
+  const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newPassword || newPassword.length < 6) {
-      setAuthMessage({ type: 'error', text: 'A senha deve ter pelo menos 6 caracteres.' });
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      setAuthMessage({ type: 'error', text: 'Preencha todos os campos de senha.' });
       return;
     }
-    
+    if (newPassword.length < 6) {
+      setAuthMessage({ type: 'error', text: 'A nova senha deve ter pelo menos 6 caracteres.' });
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setAuthMessage({ type: 'error', text: 'As novas senhas não coincidem.' });
+      return;
+    }
+
     setUpdatingPassword(true);
     setAuthMessage(null);
     
     try {
-      const { error } = await supabase.auth.updateUser({
+      // 1. Identificar usuário atual com o cliente principal
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user?.email) throw new Error('Sessão expirada. Faça login novamente.');
+
+      // 2. CRIAR UM CLIENTE TEMPORÁRIO PARA VERIFICAR A SENHA ATUAL
+      // Isso é CRUCIAL para não resetar a sessão do usuário principal nem causar re-renders do AuthContext
+      const tempSupabase = createClient(
+        import.meta.env.VITE_SUPABASE_URL,
+        import.meta.env.VITE_SUPABASE_ANON_KEY,
+        { auth: { persistSession: false } }
+      );
+
+      const { error: verifyError } = await tempSupabase.auth.signInWithPassword({
+        email: user.email,
+        password: currentPassword
+      });
+
+      if (verifyError) throw new Error('A senha atual fornecida está incorreta.');
+
+      // 3. ATUALIZAR SENHA NO BANCO DE AUTENTICAÇÃO DO SUPABASE (USER_ID ORIGINAL)
+      // Usamos o cliente principal agora que sabemos que a senha atual é válida
+      const { error: updateError } = await supabase.auth.updateUser({
         password: newPassword
       });
 
-      if (error) throw error;
+      if (updateError) throw updateError;
       
-      setAuthMessage({ type: 'success', text: 'Senha atualizada com sucesso!' });
+      // 4. Salvar histórico no banco de dados (Tabela Pública para auditoria)
+      await supabase.from('audit_logs').insert({
+        user_email: user.email,
+        action: 'password_change',
+        details: { 
+          source: 'settings_panel',
+          timestamp: new Date().toISOString(),
+          status: 'success'
+        }
+      });
+
+      // 5. Atualizar perfil se necessário (opcional, apenas para auditoria interna)
+      await supabase.from('profiles').update({ updated_at: new Date().toISOString() }).eq('id', user.id);
+
+      setAuthMessage({ type: 'success', text: 'Senha alterada com sucesso no Supabase Auth!' });
+      setCurrentPassword('');
       setNewPassword('');
+      setConfirmPassword('');
     } catch (error: any) {
-      setAuthMessage({ type: 'error', text: error.message || 'Erro ao atualizar senha.' });
+      setAuthMessage({ type: 'error', text: error.message || 'Erro ao processar alteração de senha.' });
     } finally {
       setUpdatingPassword(false);
     }
   };
+
+
 
   const set = (key: keyof SystemSettings, value: any) =>
     setSettings(prev => ({ ...prev, [key]: value }));
@@ -242,7 +309,7 @@ const Settings: React.FC = () => {
               type="text"
               value={settings.company_name}
               onChange={e => set('company_name', e.target.value)}
-              placeholder="Ex: NexusLoc Locações LTDA"
+              placeholder="Ex: Itabaiana Loc Locações LTDA"
               className="input-field"
               required
             />
@@ -284,7 +351,7 @@ const Settings: React.FC = () => {
               type="email"
               value={settings.company_email}
               onChange={e => set('company_email', e.target.value)}
-              placeholder="contato@nexusloc.com"
+              placeholder="contato@itabaianaloc.com"
               className="input-field"
             />
           </Field>
@@ -361,7 +428,7 @@ const Settings: React.FC = () => {
                   type="email"
                   value={newAdminEmail}
                   onChange={e => setNewAdminEmail(e.target.value)}
-                  placeholder="exemplo@ nexusloc.com"
+                  placeholder="exemplo@itabaianaloc.com"
                   className="input-field"
                 />
               </Field>
@@ -392,24 +459,55 @@ const Settings: React.FC = () => {
             desc="Altere sua senha de acesso atual."
           >
             <div className="space-y-4">
+              <Field label="Senha Atual" icon={<Lock size={16} />}>
+                <input
+                  type="password"
+                  value={currentPassword}
+                  onChange={e => setCurrentPassword(e.target.value)}
+                  placeholder="Sua senha de login"
+                  className="input-field"
+                  required
+                />
+              </Field>
               <Field label="Nova Senha" icon={<Lock size={16} />}>
                 <input
                   type="password"
                   value={newPassword}
                   onChange={e => setNewPassword(e.target.value)}
-                  placeholder="Digite a nova senha"
+                  placeholder="Mínimo 6 caracteres"
                   className="input-field"
+                  required
                 />
               </Field>
+              <Field label="Confirmar Nova Senha" icon={<ShieldCheck size={16} />}>
+                <input
+                  type="password"
+                  value={confirmPassword}
+                  onChange={e => setConfirmPassword(e.target.value)}
+                  placeholder="Repita a nova senha"
+                  className="input-field"
+                  required
+                />
+              </Field>
+              
               <div className="pt-2">
                 <button
                   type="button"
-                  onClick={handleChangePassword}
-                  disabled={updatingPassword || !newPassword}
-                  className="w-full btn-secondary border-primary-200 text-primary-700 hover:bg-primary-50 !py-2.5 text-sm"
+                  onClick={handlePasswordChange}
+                  disabled={updatingPassword}
+                  className="w-full btn-primary bg-indigo-600 hover:bg-indigo-700 !py-2.5 text-sm shadow-indigo-100 shadow-lg"
                 >
-                  {updatingPassword ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
-                  Atualizar Minha Senha
+                  {updatingPassword ? (
+                    <>
+                      <Loader2 size={18} className="animate-spin" />
+                      Alterando senha...
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle2 size={18} />
+                      Confirmar Troca de Senha
+                    </>
+                  )}
                 </button>
               </div>
             </div>

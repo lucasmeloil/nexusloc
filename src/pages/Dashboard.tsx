@@ -332,7 +332,7 @@ const Dashboard: React.FC = () => {
                           <button
                             onClick={() => {
                               const phone = alert.client_phone?.replace(/\D/g, '');
-                              const msg = `Olá ${alert.client_name}! 👋\n\nEste é um lembrete de que sua parcela ${alert.installment_number} de ${alert.amount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} referente ao veículo ${alert.vehicle_model} está ${isToday ? 'vencendo hoje' : 'em atraso'}.\n\nPara pagamentos via Pix ou dúvidas, estamos à disposição!\n\nNexusLoc`;
+                              const msg = `Olá ${alert.client_name}! 👋\n\nEste é um lembrete de que sua parcela ${alert.installment_number} de ${alert.amount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} referente ao veículo ${alert.vehicle_model} está ${isToday ? 'vencendo hoje' : 'em atraso'}.\n\nPara pagamentos via Pix ou dúvidas, estamos à disposição!\n\nItabaiana Loc`;
                               window.open(`https://wa.me/55${phone}?text=${encodeURIComponent(msg)}`, '_blank');
                             }}
                             className="p-2 bg-white/50 hover:bg-white rounded-xl shadow-sm transition-colors text-emerald-600"

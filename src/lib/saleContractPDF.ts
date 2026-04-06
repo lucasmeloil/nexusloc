@@ -95,7 +95,7 @@ export const generateSaleContractPDF = async (
   doc.setTextColor(...WHITE);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(18);
-  doc.text(safe(company.name) || 'NexusLoc', textX, 19);
+  doc.text(safe(company.name) || 'Itabaiana Loc', textX, 19);
 
   doc.setFontSize(8);
   doc.setFont('helvetica', 'normal');

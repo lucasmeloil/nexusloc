@@ -255,7 +255,7 @@ const Reports: React.FC = () => {
     doc.setFontSize(18);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(...WHITE);
-    doc.text(safe(settings?.company_name ?? 'NexusLoc'), titleX, 18);
+    doc.text(safe(settings?.company_name ?? 'Itabaiana Loc'), titleX, 18);
 
     // Sub-info
     doc.setFontSize(8);
@@ -415,7 +415,7 @@ const Reports: React.FC = () => {
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(...MUTED);
       doc.text(
-        safe(`${settings?.company_name ?? 'NexusLoc'}  |  Relatorio gerado em ${format(new Date(), 'dd/MM/yyyy HH:mm')}`),
+        safe(`${settings?.company_name ?? 'Itabaiana Loc'}  |  Relatorio gerado em ${format(new Date(), 'dd/MM/yyyy HH:mm')}`),
         14, H - 4,
       );
       doc.text(`Pagina ${p} de ${pageCount}`, W - 14, H - 4, { align: 'right' });

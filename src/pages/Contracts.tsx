@@ -182,7 +182,7 @@ const Contracts: React.FC = () => {
 
   const sendWhatsApp = (c: Contract) => {
     const phone = c.client?.phone?.replace(/\D/g, '');
-    const msg = `Olá ${c.client?.name}, aqui está o seu contrato da NexusLoc referente ao ${c.vehicle?.model}. Valor total: R$ ${Number(c.total_value).toFixed(2)}.`;
+    const msg = `Olá ${c.client?.name}, aqui está o seu contrato da Itabaiana Loc referente ao ${c.vehicle?.model}. Valor total: R$ ${Number(c.total_value).toFixed(2)}.`;
     window.open(`https://wa.me/55${phone}?text=${encodeURIComponent(msg)}`, '_blank');
   };
 
@@ -374,8 +374,8 @@ const Contracts: React.FC = () => {
   const sendSaleWhatsApp = (c: SaleContract, installment?: SaleInstallment) => {
     const phone = c.client?.phone?.replace(/\D/g, '');
     const msg = installment
-      ? `Olá ${c.client?.name}! 👋\n\nSua parcela ${installment.installment_number}/${c.installments} de ${fmt(installment.amount)} vence em ${format(parseISO(installment.due_date), 'dd/MM/yyyy')}.\n\nNexusLoc – Aluguel com Intenção de Venda`
-      : `Olá ${c.client?.name}! 👋\n\nSeu contrato de *${c.vehicle?.model}* está em dia. Valor total: ${fmt(c.sale_price)}.\n\nNexusLoc`;
+      ? `Olá ${c.client?.name}! 👋\n\nSua parcela ${installment.installment_number}/${c.installments} de ${fmt(installment.amount)} vence em ${format(parseISO(installment.due_date), 'dd/MM/yyyy')}.\n\nItabaiana Loc – Aluguel com Intenção de Venda`
+      : `Olá ${c.client?.name}! 👋\n\nSeu contrato de *${c.vehicle?.model}* está em dia. Valor total: ${fmt(c.sale_price)}.\n\nItabaiana Loc`;
     window.open(`https://wa.me/55${phone}?text=${encodeURIComponent(msg)}`, '_blank');
   };
 

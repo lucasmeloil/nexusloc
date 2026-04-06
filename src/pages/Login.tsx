@@ -17,7 +17,7 @@ const BG_IMAGE_URL = 'https://images.unsplash.com/photo-1494976388531-d1058494cd
 const MAX_ATTEMPTS      = 5;
 const LOCKOUT_DURATIONS = [30, 60, 300, 900];
 const MIN_SUBMIT_MS     = 1000;
-const STORAGE_KEY       = 'nexus_sec_v3';
+const STORAGE_KEY       = 'itabaiana_sec_v3';
 
 // ── CAPTCHA Logic ──────────────────────────────────────────────────────────
 const genCaptcha = () => {
@@ -259,7 +259,7 @@ const Login: React.FC = () => {
 
         <div className="relative z-10 flex items-center justify-between border-t border-slate-200 pt-8 mt-12">
           <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
-            NEXUSLOC <span className="text-indigo-600 opacity-60">SISTEMA INTERNO</span>
+            ITABAIANA LOC <span className="text-indigo-600 opacity-60">SISTEMA INTERNO</span>
           </p>
           <p className="text-[10px] font-medium text-slate-400 italic">
             © 2026 ITABAIANA LOCAÇÕES

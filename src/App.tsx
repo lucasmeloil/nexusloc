@@ -10,6 +10,7 @@ import Billing from './pages/Billing';
 import Reports from './pages/Reports';
 import Settings from './pages/Settings';
 import LandingPage from './pages/LandingPage';
+import Catalog from './pages/Catalog';
 
 // Componente de Proteção de Rotas (Guarda de Segurança)
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -37,6 +38,7 @@ const App: React.FC = () => {
         <Routes>
           {/* Rotas Públicas */}
           <Route path="/" element={<LandingPage />} />
+          <Route path="/catalogo" element={<Catalog />} />
           <Route path="/login" element={<Login />} />
           
           {/* Rotas Protegidas - Blindadas sob o ProtectedRoute */}

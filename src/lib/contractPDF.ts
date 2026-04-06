@@ -111,7 +111,7 @@ export const generateContractPDF = async (
       doc.setTextColor(...WHITE);
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(20);
-      doc.text(company.name || 'NexusLoc', M + 24, 20);
+      doc.text(company.name || 'Itabaiana Loc', M + 24, 20);
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(8.5);
       doc.text('Sistema de Gestão de Locação de Veículos', M + 24, 27);
@@ -119,7 +119,7 @@ export const generateContractPDF = async (
       doc.setTextColor(...WHITE);
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(22);
-      doc.text(company.name || 'NexusLoc', M, 22);
+      doc.text(company.name || 'Itabaiana Loc', M, 22);
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(8.5);
       doc.text('Sistema de Gestão de Locação de Veículos', M, 30);
@@ -128,7 +128,7 @@ export const generateContractPDF = async (
     doc.setTextColor(...WHITE);
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(22);
-    doc.text(company.name || 'NexusLoc', M, 22);
+    doc.text(company.name || 'Itabaiana Loc', M, 22);
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(8.5);
     doc.text('Sistema de Gestão de Locação de Veículos', M, 30);
@@ -162,7 +162,7 @@ export const generateContractPDF = async (
 
   // ── Locadora ────────────────────────────────────────────
   y = section(doc, '1. Dados da Locadora', y, W, M, CW);
-  field(doc, 'Razão Social / Nome', company.name || 'NexusLoc', c1, y, cw);
+  field(doc, 'Razão Social / Nome', company.name || 'Itabaiana Loc', c1, y, cw);
   field(doc, 'CNPJ / CPF', company.cnpj || 'Não informado', c2, y, cw);
   field(doc, 'Telefone', company.phone || '—', c3, y, cw);
   y += 15;
@@ -332,7 +332,7 @@ export const generateContractPDF = async (
   doc.setTextColor(...GRAY);
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(7);
-  const foot = `${company.name || 'NexusLoc'}  •  ${company.phone || ''}  •  ${company.email || ''}  •  ${company.website || ''}`;
+  const foot = `${company.name || 'Itabaiana Loc'}  •  ${company.phone || ''}  •  ${company.email || ''}  •  ${company.website || ''}`;
   doc.text(foot, W / 2, H - 4, { align: 'center' });
 
   const clientSlug = contract.client?.name?.replace(/\s+/g, '_') || 'cliente';
