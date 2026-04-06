@@ -275,6 +275,16 @@ const Login: React.FC = () => {
           transition={{ duration: 0.5 }}
           className="w-full max-w-[480px]"
         >
+          {/* Mobile Back Button */}
+          <div className="lg:hidden mb-12 flex justify-between items-center">
+            <Link to="/" className="inline-flex items-center gap-2 text-slate-400 hover:text-indigo-600 transition-colors group">
+              <div className="w-8 h-8 rounded-full border border-slate-100 flex items-center justify-center group-hover:-translate-x-1 transition-transform">
+                <ArrowLeft size={14} />
+              </div>
+              <span className="text-[10px] font-black uppercase tracking-[0.2em]">Voltar ao Site</span>
+            </Link>
+          </div>
+
           {/* Mobile Brand */}
           <div className="lg:hidden flex flex-col items-center mb-10 text-center">
             <img src={LOGO_URL} alt="Logo" className="h-20 mb-4" />
