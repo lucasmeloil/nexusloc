@@ -49,7 +49,7 @@ const HERO_SLIDES = [
     title: 'Após 30 meses, A MOTO É SUA!',
     subtitle: 'O Aluguel com Intenção de Compra da CG 160 feito do seu jeito e sem burocracia.',
     cta: 'Reservar Minha Moto',
-    href: 'https://wa.me/5579999641398?text=Ol%C3%A1%21%20Eu%20quero%20Assinar%20a%20CG%20160%21',
+    href: 'https://wa.me/557999641398?text=Ol%C3%A1%21%20Eu%20quero%20Assinar%20a%20CG%20160%21',
   },
 ];
 
@@ -70,7 +70,7 @@ const LandingPage: React.FC = () => {
     e.preventDefault();
     const text = `Olá, me chamo *${waData.name}*.\nTenho interesse em: *${waData.interest}*.\n\n${waData.message}`;
     const encoded = encodeURIComponent(text);
-    window.open(`https://wa.me/5579999641398?text=${encoded}`, '_blank');
+    window.open(`https://wa.me/557999641398?text=${encoded}`, '_blank');
     setWaFormOpen(false);
   };
 
@@ -176,7 +176,7 @@ const LandingPage: React.FC = () => {
                     {HERO_SLIDES[activeSlide].cta}
                     <ArrowRight size={16} className="transition-transform group-hover:translate-x-1 sm:w-[18px] sm:h-[18px]" />
                   </a>
-                  <a href={`https://wa.me/5579999641398?text=${encodeURIComponent("Olá! Estou no site e gostaria de falar sobre a assinatura da CG 160.")}`} target="_blank" className="h-12 sm:h-16 px-6 sm:px-12 bg-white/5 backdrop-blur-xl border border-white/20 text-white rounded-xl sm:rounded-2xl font-black uppercase text-[11px] tracking-[0.2em] hover:bg-white/10 active:scale-95 transition-all flex items-center justify-center gap-3 group w-full sm:w-auto">
+                  <a href={`https://wa.me/557999641398?text=${encodeURIComponent("Olá! Estou no site e gostaria de falar sobre a assinatura da CG 160.")}`} target="_blank" className="h-12 sm:h-16 px-6 sm:px-12 bg-white/5 backdrop-blur-xl border border-white/20 text-white rounded-xl sm:rounded-2xl font-black uppercase text-[11px] tracking-[0.2em] hover:bg-white/10 active:scale-95 transition-all flex items-center justify-center gap-3 group w-full sm:w-auto">
                     <Phone size={16} className="transition-transform group-hover:rotate-12 sm:w-[18px] sm:h-[18px]" />
                     Atendimento VIP
                   </a>
@@ -270,7 +270,7 @@ const LandingPage: React.FC = () => {
                <p className="text-slate-500 font-medium text-lg leading-relaxed mb-10 max-w-lg mx-auto">
                  Estamos atualizando nosso estoque com modelos 2024/2025. Enquanto isso, consulte disponibilidade imediata via WhatsApp.
                </p>
-               <a href="https://wa.me/5579999641398" target="_blank" className="h-16 px-12 bg-indigo-600 text-white rounded-full font-black uppercase tracking-widest text-[11px] hover:bg-indigo-700 shadow-2xl shadow-indigo-600/30 transition-all active:scale-95 flex items-center justify-center gap-3 mx-auto max-w-xs">
+               <a href="https://wa.me/557999641398" target="_blank" className="h-16 px-12 bg-indigo-600 text-white rounded-full font-black uppercase tracking-widest text-[11px] hover:bg-indigo-700 shadow-2xl shadow-indigo-600/30 transition-all active:scale-95 flex items-center justify-center gap-3 mx-auto max-w-xs">
                  Consultar Agora <MessageCircle size={18} />
                </a>
             </div>
@@ -327,7 +327,7 @@ const LandingPage: React.FC = () => {
                           {Number(v.daily_rate).toLocaleString('pt-BR', { minimumFractionDigits: 0 })}
                         </p>
                       </div>
-                      <a href={`https://wa.me/5579999641398?text=${encodeURIComponent(`Olá! Vi o ${v.model} no site e gostaria de saber a disponibilidade.`)}`} target="_blank" className="h-14 w-14 bg-indigo-600 text-white rounded-full flex items-center justify-center hover:bg-slate-900 shadow-lg shadow-indigo-600/20 active:scale-95 transition-all">
+                      <a href={`https://wa.me/557999641398?text=${encodeURIComponent(`Olá! Vi o ${v.model} no site e gostaria de saber a disponibilidade.`)}`} target="_blank" className="h-14 w-14 bg-indigo-600 text-white rounded-full flex items-center justify-center hover:bg-slate-900 shadow-lg shadow-indigo-600/20 active:scale-95 transition-all">
                         <ArrowRight size={20} />
                       </a>
                     </div>
@@ -418,7 +418,7 @@ const LandingPage: React.FC = () => {
                   Após <span className="text-white text-3xl">30 meses</span><br className="sm:hidden"/> a moto é <span className="text-white">sua!</span>
                 </div>
 
-                <a href={`https://wa.me/5579999641398?text=${encodeURIComponent("Olá! Vim pelo site e gostaria de saber mais sobre a Assinatura de Motos (R$330 semanais) com a moto sendo minha após 30 meses!")}`} target="_blank" rel="noreferrer" className="w-full h-16 bg-white text-red-700 rounded-full font-black uppercase tracking-widest text-sm shadow-xl hover:bg-slate-50 active:scale-95 transition-all flex items-center justify-center gap-3">
+                <a href={`https://wa.me/557999641398?text=${encodeURIComponent("Olá! Vim pelo site e gostaria de saber mais sobre a Assinatura de Motos (R$330 semanais) com a moto sendo minha após 30 meses!")}`} target="_blank" rel="noreferrer" className="w-full h-16 bg-white text-red-700 rounded-full font-black uppercase tracking-widest text-sm shadow-xl hover:bg-slate-50 active:scale-95 transition-all flex items-center justify-center gap-3">
                   <Phone size={18} className="fill-red-700" />
                   Alugar Minha Moto
                 </a>
@@ -583,7 +583,7 @@ const LandingPage: React.FC = () => {
                 Fale agora com nosso time VIP e garanta as melhores condições de Sergipe.
               </p>
               <div className="flex flex-col sm:flex-row gap-6 justify-center">
-                 <a href="https://wa.me/5579999641398" className="px-14 py-6 bg-indigo-600 text-white rounded-2xl font-black uppercase text-xs tracking-[0.2em] shadow-2xl shadow-indigo-600/50 hover:bg-indigo-700 active:scale-95 transition-all flex items-center justify-center gap-3">
+                 <a href="https://wa.me/557999641398" className="px-14 py-6 bg-indigo-600 text-white rounded-2xl font-black uppercase text-xs tracking-[0.2em] shadow-2xl shadow-indigo-600/50 hover:bg-indigo-700 active:scale-95 transition-all flex items-center justify-center gap-3">
                    Mandar WhatsApp <MessageCircle size={18} />
                  </a>
                  <a href="#frota" className="px-14 py-6 bg-white text-slate-900 rounded-2xl font-black uppercase text-xs tracking-[0.2em] hover:bg-slate-100 active:scale-95 transition-all">
@@ -679,7 +679,7 @@ const LandingPage: React.FC = () => {
              </p>
              <p className="text-slate-500 font-medium flex gap-3 items-center">
                 <Phone size={18} className="text-indigo-500" />
-                (79) 99964-1398
+                +55 79 9964-1398
              </p>
           </div>
         </div>

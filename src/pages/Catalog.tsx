@@ -191,7 +191,7 @@ const Catalog: React.FC = () => {
                       </p>
                     </div>
                     <a 
-                      href={`https://wa.me/5579999641398?text=${encodeURIComponent(`Olá! Vi o ${v.model} no catálogo do site e gostaria de saber mais informações.`)}`} 
+                      href={`https://wa.me/557999641398?text=${encodeURIComponent(`Olá! Vi o ${v.model} no catálogo do site e gostaria de saber mais informações.`)}`} 
                       target="_blank" 
                       className="h-12 w-12 md:h-14 md:w-14 bg-indigo-600 text-white rounded-2xl flex items-center justify-center hover:bg-slate-900 shadow-lg shadow-indigo-200 active:scale-95 transition-all"
                     >
