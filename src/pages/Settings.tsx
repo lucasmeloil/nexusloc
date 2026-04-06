@@ -15,6 +15,10 @@ import {
   Clock,
   Coins,
   Image,
+  UserPlus,
+  ShieldCheck,
+  Lock,
+  UserCircle
 } from 'lucide-react';
 
 const DEFAULT_SETTINGS: SystemSettings = {
@@ -34,11 +38,61 @@ const DEFAULT_SETTINGS: SystemSettings = {
   ],
 };
 
+const Field = ({
+  label,
+  icon,
+  children,
+}: {
+  label: string;
+  icon?: React.ReactNode;
+  children: React.ReactNode;
+}) => (
+  <div className="space-y-1.5">
+    <label className="flex items-center gap-2 text-sm font-bold text-slate-700">
+      {icon && <span className="text-primary-500">{icon}</span>}
+      {label}
+    </label>
+    {children}
+  </div>
+);
+
+const Section = ({
+  icon,
+  title,
+  desc,
+  children,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  desc: string;
+  children: React.ReactNode;
+}) => (
+  <div className="card">
+    <div className="flex items-center gap-3 mb-6 pb-5 border-b border-slate-100">
+      <div className="p-2.5 bg-primary-50 text-primary-600 rounded-xl">{icon}</div>
+      <div>
+        <h3 className="text-lg font-bold text-slate-900">{title}</h3>
+        <p className="text-sm text-slate-500">{desc}</p>
+      </div>
+    </div>
+    <div className="space-y-5">{children}</div>
+  </div>
+);
+
 const Settings: React.FC = () => {
   const [settings, setSettings] = useState<SystemSettings>(DEFAULT_SETTINGS);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+
+  // Estados para Gestão de Usuários
+  const [newAdminEmail, setNewAdminEmail] = useState('');
+  const [newAdminPassword, setNewAdminPassword] = useState('');
+  const [creatingAdmin, setCreatingAdmin] = useState(false);
+  
+  const [newPassword, setNewPassword] = useState('');
+  const [updatingPassword, setUpdatingPassword] = useState(false);
+  const [authMessage, setAuthMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
 
   useEffect(() => {
     fetchSettings();
@@ -84,6 +138,57 @@ const Settings: React.FC = () => {
     }
   };
 
+  const handleCreateAdmin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newAdminEmail || !newAdminPassword) return;
+    
+    setCreatingAdmin(true);
+    setAuthMessage(null);
+    
+    try {
+      const { error } = await supabase.auth.signUp({
+        email: newAdminEmail,
+        password: newAdminPassword,
+      });
+
+      if (error) throw error;
+      
+      setAuthMessage({ type: 'success', text: 'Convite enviado! O novo admin precisa confirmar o e-mail.' });
+      setNewAdminEmail('');
+      setNewAdminPassword('');
+    } catch (error: any) {
+      setAuthMessage({ type: 'error', text: error.message || 'Erro ao criar usuário.' });
+    } finally {
+      setCreatingAdmin(false);
+    }
+  };
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newPassword || newPassword.length < 6) {
+      setAuthMessage({ type: 'error', text: 'A senha deve ter pelo menos 6 caracteres.' });
+      return;
+    }
+    
+    setUpdatingPassword(true);
+    setAuthMessage(null);
+    
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword
+      });
+
+      if (error) throw error;
+      
+      setAuthMessage({ type: 'success', text: 'Senha atualizada com sucesso!' });
+      setNewPassword('');
+    } catch (error: any) {
+      setAuthMessage({ type: 'error', text: error.message || 'Erro ao atualizar senha.' });
+    } finally {
+      setUpdatingPassword(false);
+    }
+  };
+
   const set = (key: keyof SystemSettings, value: any) =>
     setSettings(prev => ({ ...prev, [key]: value }));
 
@@ -100,47 +205,6 @@ const Settings: React.FC = () => {
   const removeClause = (index: number) => {
     set('contract_clauses', settings.contract_clauses.filter((_, i) => i !== index));
   };
-
-  const Field = ({
-    label,
-    icon,
-    children,
-  }: {
-    label: string;
-    icon?: React.ReactNode;
-    children: React.ReactNode;
-  }) => (
-    <div className="space-y-1.5">
-      <label className="flex items-center gap-2 text-sm font-bold text-slate-700">
-        {icon && <span className="text-primary-500">{icon}</span>}
-        {label}
-      </label>
-      {children}
-    </div>
-  );
-
-  const Section = ({
-    icon,
-    title,
-    desc,
-    children,
-  }: {
-    icon: React.ReactNode;
-    title: string;
-    desc: string;
-    children: React.ReactNode;
-  }) => (
-    <div className="card">
-      <div className="flex items-center gap-3 mb-6 pb-5 border-b border-slate-100">
-        <div className="p-2.5 bg-primary-50 text-primary-600 rounded-xl">{icon}</div>
-        <div>
-          <h3 className="text-lg font-bold text-slate-900">{title}</h3>
-          <p className="text-sm text-slate-500">{desc}</p>
-        </div>
-      </div>
-      <div className="space-y-5">{children}</div>
-    </div>
-  );
 
   if (loading) {
     return (
@@ -283,6 +347,90 @@ const Settings: React.FC = () => {
             </Field>
           </Section>
         </div>
+
+        {/* Gestão de Acesso */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <Section
+            icon={<UserPlus size={22} />}
+            title="Novo Administrador"
+            desc="Crie uma nova conta de acesso para o sistema."
+          >
+            <div className="space-y-4">
+              <Field label="E-mail do Novo Admin" icon={<Mail size={16} />}>
+                <input
+                  type="email"
+                  value={newAdminEmail}
+                  onChange={e => setNewAdminEmail(e.target.value)}
+                  placeholder="exemplo@ nexusloc.com"
+                  className="input-field"
+                />
+              </Field>
+              <Field label="Senha Temporária" icon={<Lock size={16} />}>
+                <input
+                  type="password"
+                  value={newAdminPassword}
+                  onChange={e => setNewAdminPassword(e.target.value)}
+                  placeholder="Mínimo 6 caracteres"
+                  className="input-field"
+                />
+              </Field>
+              <button
+                type="button"
+                onClick={handleCreateAdmin}
+                disabled={creatingAdmin || !newAdminEmail || !newAdminPassword}
+                className="w-full btn-primary bg-indigo-600 hover:bg-indigo-700 !py-2.5 text-sm"
+              >
+                {creatingAdmin ? <Loader2 size={18} className="animate-spin" /> : <PlusCircle size={18} />}
+                Criar Novo Admin
+              </button>
+            </div>
+          </Section>
+
+          <Section
+            icon={<ShieldCheck size={22} />}
+            title="Minha Segurança"
+            desc="Altere sua senha de acesso atual."
+          >
+            <div className="space-y-4">
+              <Field label="Nova Senha" icon={<Lock size={16} />}>
+                <input
+                  type="password"
+                  value={newPassword}
+                  onChange={e => setNewPassword(e.target.value)}
+                  placeholder="Digite a nova senha"
+                  className="input-field"
+                />
+              </Field>
+              <div className="pt-2">
+                <button
+                  type="button"
+                  onClick={handleChangePassword}
+                  disabled={updatingPassword || !newPassword}
+                  className="w-full btn-secondary border-primary-200 text-primary-700 hover:bg-primary-50 !py-2.5 text-sm"
+                >
+                  {updatingPassword ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
+                  Atualizar Minha Senha
+                </button>
+              </div>
+            </div>
+          </Section>
+        </div>
+
+        {/* Mensagens de Feedback de Auth */}
+        {authMessage && (
+          <div className={`p-4 rounded-2xl border flex items-center gap-3 animate-in fade-in slide-in-from-bottom-4 duration-300 ${
+            authMessage.type === 'success' ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-red-50 border-red-200 text-red-800'
+          }`}>
+            {authMessage.type === 'success' ? <CheckCircle2 size={20} /> : <RotateCcw size={20} />}
+            <p className="text-sm font-bold">{authMessage.text}</p>
+            <button 
+              onClick={() => setAuthMessage(null)}
+              className="ml-auto text-xs font-black uppercase tracking-widest opacity-50 hover:opacity-100"
+            >
+              Fechar
+            </button>
+          </div>
+        )}
 
         {/* Cláusulas do Contrato */}
         <Section

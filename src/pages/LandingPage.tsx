@@ -254,7 +254,7 @@ const LandingPage: React.FC = () => {
             { icon: Zap, label: 'Rápido', text: 'Locação em minutos' },
             { icon: ShieldCheck, label: 'Seguro', text: 'Seguro total incluso' },
             { icon: Clock, label: 'Suporte', text: 'Atendimento 24/7' },
-            { icon: CheckCircle, label: 'Qualidade', text: 'Frota higienizada' },
+            { icon: CheckCircle, label: 'Qualidade', text: 'Frota 0 KM' },
           ].map((item, i) => (
             <motion.div
               whileHover={{ y: -5 }}
