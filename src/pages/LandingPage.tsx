@@ -309,7 +309,9 @@ const LandingPage: React.FC = () => {
                     <div className="flex gap-6 mb-8">
                       <div className="flex items-center gap-2">
                         <Users size={14} className="text-slate-400" />
-                        <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400">5 Lugares</span>
+                        <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400">
+                          {v.category?.toLowerCase().includes('moto') ? '2 Lugares' : '5 Lugares'}
+                        </span>
                       </div>
                       <div className="flex items-center gap-2">
                         <Zap size={14} className="text-slate-400" />

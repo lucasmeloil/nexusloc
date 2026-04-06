@@ -194,7 +194,7 @@ const Layout: React.FC = () => {
       // 4. Veículos em manutenção
       const { data: inMaint } = await supabase
         .from('vehicles')
-        .select('id, updated_at, model, plate')
+        .select('id, created_at, model, plate')
         .eq('status', 'maintenance')
         .limit(5);
 
@@ -204,7 +204,7 @@ const Layout: React.FC = () => {
           type: 'maintenance',
           title: 'Veículo em Manutenção',
           message: `${v.model} (${v.plate}) está em manutenção.`,
-          timestamp: new Date(v.updated_at ?? now),
+          timestamp: new Date(v.created_at ?? now),
           read: readIds.current.has(`maint_${v.id}`),
         });
       });

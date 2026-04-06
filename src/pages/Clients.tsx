@@ -17,6 +17,8 @@ import {
   Upload,
   AlertCircle,
   CheckCircle2,
+  Eye,
+  FileText as FileIcon,
 } from 'lucide-react';
 
 const Field = ({ label, children }: { label: string; children: React.ReactNode }) => (
@@ -43,7 +45,11 @@ const Clients: React.FC = () => {
     address: '',
     phone: '',
     email: '',
+    cnh_url: '',
+    address_proof_url: '',
   });
+
+  const [uploading, setUploading] = useState<{ cnh: boolean; proof: boolean }>({ cnh: false, proof: false });
 
   const showToast = (type: 'success' | 'error', msg: string) => {
     setToast({ type, msg });
@@ -71,12 +77,54 @@ const Clients: React.FC = () => {
         address: client.address || '',
         phone: client.phone || '',
         email: client.email || '',
+        cnh_url: client.cnh_url || '',
+        address_proof_url: client.address_proof_url || '',
       });
     } else {
       setEditingClient(null);
-      setFormData({ name: '', cpf_cnpj: '', rg: '', birth_date: '', address: '', phone: '', email: '' });
+      setFormData({
+        name: '',
+        cpf_cnpj: '',
+        rg: '',
+        birth_date: '',
+        address: '',
+        phone: '',
+        email: '',
+        cnh_url: '',
+        address_proof_url: '',
+      });
     }
     setIsModalOpen(true);
+  };
+
+  const handleFileUpload = async (file: File, type: 'cnh' | 'proof') => {
+    try {
+      setUploading(prev => ({ ...prev, [type]: true }));
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Date.now()}_${type}.${fileExt}`;
+      const filePath = `${fileName}`;
+
+      const { data, error } = await supabase.storage
+        .from('vehicles')
+        .upload(`clients/${filePath}`, file);
+
+      if (error) throw error;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('vehicles')
+        .getPublicUrl(`clients/${filePath}`);
+
+      setFormData(prev => ({
+        ...prev,
+        [type === 'cnh' ? 'cnh_url' : 'address_proof_url']: publicUrl
+      }));
+      showToast('success', `${type.toUpperCase()} enviado com sucesso!`);
+    } catch (error: any) {
+      console.error('Upload error:', error);
+      showToast('error', `Erro no upload: ${error.message || 'Verifique se o bucket "vehicles" existe.'}`);
+    } finally {
+      setUploading(prev => ({ ...prev, [type]: false }));
+    }
   };
 
   const handleCloseModal = () => {
@@ -96,7 +144,9 @@ const Clients: React.FC = () => {
       address: formData.address.trim() || null,
       phone: formData.phone.trim() || null,
       email: formData.email.trim() || null,
-      created_at: new Date().toISOString(),
+      cnh_url: formData.cnh_url || null,
+      address_proof_url: formData.address_proof_url || null,
+      created_at: editingClient ? editingClient.created_at : new Date().toISOString(),
     };
 
     if (editingClient) {
@@ -211,7 +261,21 @@ const Clients: React.FC = () => {
                     <p className="text-xs text-slate-500 max-w-[200px] truncate flex items-center gap-2 font-medium"><MapPin size={12} className="text-slate-300 shrink-0" />{client.address || '—'}</p>
                   </td>
                   <td className="px-6 py-5 text-right">
-                    <div className="flex justify-end gap-2 shrink-0">
+                    <div className="flex justify-end items-center gap-2 shrink-0">
+                      {(client.cnh_url || client.address_proof_url) && (
+                        <div className="flex gap-1 mr-2 px-3 py-1.5 bg-slate-100 rounded-xl">
+                          {client.cnh_url && (
+                            <a href={client.cnh_url} target="_blank" rel="noopener noreferrer" className="p-1.5 text-emerald-600 hover:bg-white rounded-lg transition-all" title="Ver CNH">
+                              <FileIcon size={14} />
+                            </a>
+                          )}
+                          {client.address_proof_url && (
+                            <a href={client.address_proof_url} target="_blank" rel="noopener noreferrer" className="p-1.5 text-indigo-600 hover:bg-white rounded-lg transition-all" title="Ver Comprovante de Residência">
+                              <MapPin size={14} />
+                            </a>
+                          )}
+                        </div>
+                      )}
                       <button onClick={() => handleOpenModal(client)} className="p-2.5 text-slate-400 hover:text-primary-600 hover:bg-white hover:shadow-md hover:scale-110 rounded-xl transition-all"><Edit2 size={16} /></button>
                       <button onClick={() => handleDelete(client.id)} className="p-2.5 text-slate-400 hover:text-red-600 hover:bg-white hover:shadow-md hover:scale-110 rounded-xl transition-all"><Trash2 size={16} /></button>
                     </div>
@@ -295,14 +359,77 @@ const Clients: React.FC = () => {
                     <h4 className="text-sm font-black text-slate-900 uppercase tracking-widest">Documentação Digitalizada</h4>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pb-4">
-                    <div className="group border-2 border-dashed border-slate-200 p-6 rounded-[24px] text-center hover:border-primary-500 hover:bg-primary-50/30 transition-all cursor-pointer bg-slate-50/50">
-                      <div className="h-12 w-12 rounded-2xl bg-white shadow-sm mx-auto mb-3 flex items-center justify-center text-primary-600"><Upload size={20} /></div>
-                      <p className="text-xs font-black text-slate-900 uppercase tracking-tight">Upload CNH</p>
+                    {/* CNH Upload */}
+                    <div 
+                      onClick={() => document.getElementById('cnh-input')?.click()}
+                      className={`group border-2 border-dashed p-6 rounded-[24px] text-center transition-all cursor-pointer ${
+                        formData.cnh_url 
+                          ? 'border-emerald-500 bg-emerald-50/30' 
+                          : 'border-slate-200 hover:border-primary-500 hover:bg-primary-50/30 bg-slate-50/50'
+                      }`}
+                    >
+                      <input 
+                        type="file" 
+                        id="cnh-input" 
+                        className="hidden" 
+                        accept="image/*,application/pdf"
+                        onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0], 'cnh')}
+                      />
+                      <div className={`h-12 w-12 rounded-2xl shadow-sm mx-auto mb-3 flex items-center justify-center transition-colors relative ${
+                        formData.cnh_url ? 'bg-emerald-500 text-white' : 'bg-white text-primary-600'
+                      }`}>
+                        {uploading.cnh ? <Loader2 size={20} className="animate-spin" /> : formData.cnh_url ? <CheckCircle2 size={20} /> : <Upload size={20} />}
+                        {formData.cnh_url && !uploading.cnh && (
+                          <button 
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); window.open(formData.cnh_url, '_blank'); }}
+                            className="absolute -top-1 -right-1 p-1 bg-white text-emerald-600 rounded-lg shadow-md hover:scale-110 transition-all border border-emerald-100"
+                            title="Ver Documento"
+                          >
+                            <Eye size={12} />
+                          </button>
+                        )}
+                      </div>
+                      <p className={`text-xs font-black uppercase tracking-tight ${formData.cnh_url ? 'text-emerald-700' : 'text-slate-900'}`}>
+                        {formData.cnh_url ? 'CNH Carregada' : 'Upload CNH'}
+                      </p>
                       <p className="text-[10px] text-slate-400 mt-1 font-bold">PDF ou JPG/PNG até 5MB</p>
                     </div>
-                    <div className="group border-2 border-dashed border-slate-200 p-6 rounded-[24px] text-center hover:border-indigo-500 hover:bg-indigo-50/30 transition-all cursor-pointer bg-slate-50/50">
-                      <div className="h-12 w-12 rounded-2xl bg-white shadow-sm mx-auto mb-3 flex items-center justify-center text-indigo-600"><FileCode size={20} /></div>
-                      <p className="text-xs font-black text-slate-900 uppercase tracking-tight">Comprovante</p>
+
+                    {/* Prova de Residência Upload */}
+                    <div 
+                      onClick={() => document.getElementById('proof-input')?.click()}
+                      className={`group border-2 border-dashed p-6 rounded-[24px] text-center transition-all cursor-pointer ${
+                        formData.address_proof_url 
+                          ? 'border-indigo-500 bg-indigo-50/30' 
+                          : 'border-slate-200 hover:border-indigo-500 hover:bg-indigo-50/30 bg-slate-50/50'
+                      }`}
+                    >
+                      <input 
+                        type="file" 
+                        id="proof-input" 
+                        className="hidden" 
+                        accept="image/*,application/pdf"
+                        onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0], 'proof')}
+                      />
+                      <div className={`h-12 w-12 rounded-2xl shadow-sm mx-auto mb-3 flex items-center justify-center transition-colors relative ${
+                        formData.address_proof_url ? 'bg-indigo-500 text-white' : 'bg-white text-indigo-600'
+                      }`}>
+                        {uploading.proof ? <Loader2 size={20} className="animate-spin" /> : formData.address_proof_url ? <CheckCircle2 size={20} /> : <FileCode size={20} />}
+                        {formData.address_proof_url && !uploading.proof && (
+                          <button 
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); window.open(formData.address_proof_url, '_blank'); }}
+                            className="absolute -top-1 -right-1 p-1 bg-white text-indigo-600 rounded-lg shadow-md hover:scale-110 transition-all border border-indigo-100"
+                            title="Ver Documento"
+                          >
+                            <Eye size={12} />
+                          </button>
+                        )}
+                      </div>
+                      <p className={`text-xs font-black uppercase tracking-tight ${formData.address_proof_url ? 'text-indigo-700' : 'text-slate-900'}`}>
+                        {formData.address_proof_url ? 'Comprovante Carregado' : 'Comprovante'}
+                      </p>
                       <p className="text-[10px] text-slate-400 mt-1 font-bold">Residência (Luz/Água)</p>
                     </div>
                   </div>
