@@ -33,3 +33,6 @@ CREATE TABLE public.traffic_infractions (
 
 ALTER TABLE public.traffic_infractions ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Enable all for authenticated users" ON public.traffic_infractions FOR ALL TO authenticated USING (true);
+
+-- Notificar para reiniciar cache da API do DB
+NOTIFY pgrst, 'reload schema';

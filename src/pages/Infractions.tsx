@@ -117,15 +117,15 @@ const Infractions: React.FC = () => {
 
   return (
     <div className="space-y-6 fade-in">
-      <div className="flex justify-between items-center bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
          <div className="flex items-center gap-3">
-           <div className="p-3 bg-red-100 text-red-600 rounded-xl"><ShieldAlert size={24} /></div>
+           <div className="p-3 bg-red-100 text-red-600 rounded-xl shrink-0"><ShieldAlert size={24} /></div>
            <div>
-             <h2 className="text-2xl font-bold text-slate-800">Infrações e Multas de Trânsito</h2>
+             <h2 className="text-xl sm:text-2xl font-bold text-slate-800 tracking-tight">Infrações e Multas de Trânsito</h2>
              <p className="text-sm text-slate-500">Repasse administrativo (NIC) e repasse de cobrança para parcelas.</p>
            </div>
          </div>
-         <button onClick={() => setIsModalOpen(true)} className="btn-primary flex items-center gap-2 bg-red-600 hover:bg-red-700">
+         <button onClick={() => setIsModalOpen(true)} className="btn-primary w-full sm:w-auto flex justify-center items-center gap-2 bg-red-600 hover:bg-red-700 shrink-0">
            <Plus size={18} /> Registrar Multa
          </button>
       </div>
@@ -137,8 +137,9 @@ const Infractions: React.FC = () => {
               <input type="text" placeholder="Buscar AIT, Placa ou Cliente..." value={search} onChange={e => setSearch(e.target.value)} className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-red-500 outline-none" />
             </div>
          </div>
-         <table className="w-full text-left">
-           <thead className="bg-slate-50 border-b border-slate-100 text-xs uppercase text-slate-500 font-semibold">
+         <div className="overflow-x-auto">
+           <table className="w-full text-left min-w-[750px]">
+             <thead className="bg-slate-50 border-b border-slate-100 text-xs uppercase text-slate-500 font-semibold">
              <tr>
                <th className="px-6 py-4">Autuação (AIT) / Data</th>
                <th className="px-6 py-4">Veículo / Condutor</th>
@@ -167,21 +168,24 @@ const Infractions: React.FC = () => {
                     {i.status === 'added_to_installment' && <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-[10px] font-bold uppercase">Embutida na Parcela</span>}
                     {i.status === 'paid' && <span className="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-[10px] font-bold uppercase">Pago/Resolvido</span>}
                  </td>
-                 <td className="px-6 py-4 text-right space-x-2">
-                   {i.status === 'pending' && (
-                     <button onClick={() => handleApplyToInstallment(i)} className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded-xl transition-all" title="Embutir na próxima parcela semanal">
-                       + Embutir
+                 <td className="px-6 py-4">
+                   <div className="flex flex-wrap items-center justify-end gap-2">
+                     {i.status === 'pending' && (
+                       <button onClick={() => handleApplyToInstallment(i)} className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded-xl transition-all whitespace-nowrap" title="Embutir na próxima parcela semanal">
+                         + Embutir
+                       </button>
+                     )}
+                     <button onClick={() => generateDriverIndication(i)} className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded-xl transition-all whitespace-nowrap" title="PDF de Indicação Detran">
+                       NIC
                      </button>
-                   )}
-                   <button onClick={() => generateDriverIndication(i)} className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded-xl transition-all" title="PDF de Indicação Detran">
-                     NIC
-                   </button>
+                   </div>
                  </td>
                </tr>
              ))}
              {filtered.length === 0 && <tr><td colSpan={5} className="p-8 text-center text-slate-500">Nenhuma multa registrada.</td></tr>}
            </tbody>
          </table>
+        </div>
       </div>
 
       {isModalOpen && (

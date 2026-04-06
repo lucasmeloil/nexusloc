@@ -83,15 +83,15 @@ const Maintenance: React.FC = () => {
 
   return (
     <div className="space-y-6 fade-in">
-      <div className="flex justify-between items-center bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
         <div className="flex items-center gap-3">
-          <div className="p-3 bg-blue-100 text-blue-600 rounded-xl"><Wrench size={24} /></div>
+          <div className="p-3 bg-blue-100 text-blue-600 rounded-xl shrink-0"><Wrench size={24} /></div>
           <div>
-            <h2 className="text-2xl font-bold text-slate-800">Oficina & Manutenção</h2>
+            <h2 className="text-xl sm:text-2xl font-bold text-slate-800">Oficina & Manutenção</h2>
             <p className="text-sm text-slate-500">Agende revisões e trocas de óleo preventivas.</p>
           </div>
         </div>
-        <button onClick={() => setIsModalOpen(true)} className="btn-primary flex items-center gap-2">
+        <button onClick={() => setIsModalOpen(true)} className="btn-primary w-full sm:w-auto flex justify-center items-center gap-2 shrink-0">
           <Plus size={18} /> Agendar
         </button>
       </div>
@@ -118,16 +118,17 @@ const Maintenance: React.FC = () => {
              <input type="text" placeholder="Buscar placa ou serviço..." value={search} onChange={e => setSearch(e.target.value)} className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
            </div>
         </div>
-        <table className="w-full text-left">
-          <thead className="bg-slate-50 border-b border-slate-100 text-xs uppercase text-slate-500 font-semibold">
-            <tr>
-              <th className="px-6 py-4">Veículo</th>
-              <th className="px-6 py-4">Serviço/Descrição</th>
-              <th className="px-6 py-4">Data Agendada</th>
-              <th className="px-6 py-4">Status</th>
-              <th className="px-6 py-4 text-right">Ações</th>
-            </tr>
-          </thead>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left min-w-[700px]">
+            <thead className="bg-slate-50 border-b border-slate-100 text-xs uppercase text-slate-500 font-semibold">
+              <tr>
+                <th className="px-6 py-4">Veículo</th>
+                <th className="px-6 py-4">Serviço/Descrição</th>
+                <th className="px-6 py-4">Data Agendada</th>
+                <th className="px-6 py-4">Status</th>
+                <th className="px-6 py-4 text-right">Ações</th>
+              </tr>
+            </thead>
           <tbody className="divide-y divide-slate-50">
             {filtered.map(s => (
               <tr key={s.id} className="hover:bg-slate-50/50">
@@ -153,6 +154,7 @@ const Maintenance: React.FC = () => {
             {filtered.length === 0 && <tr><td colSpan={5} className="p-8 text-center text-slate-500">Nenhuma manutenção encontrada.</td></tr>}
           </tbody>
         </table>
+        </div>
       </div>
 
       {isModalOpen && (
