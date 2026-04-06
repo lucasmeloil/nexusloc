@@ -383,12 +383,12 @@ const RentalSale: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <div>
           <div className="flex items-center gap-3 mb-1">
-            <div className="p-2 bg-violet-100 text-violet-600 rounded-xl">
+            <div className="p-2 bg-violet-100 text-violet-600 rounded-xl shrink-0">
               <ShoppingCart size={22} />
             </div>
-            <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">Aluguel com Intenção de Venda</h2>
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight leading-tight">Venda-Aluguel</h2>
           </div>
-          <p className="text-slate-500 ml-1">Contratos parcelados em até 150x com gestão completa de recibos e notificações.</p>
+          <p className="text-slate-500 ml-1 mt-1 text-sm sm:text-base leading-snug drop-shadow-sm">Contratos parcelados em até 150x com gestão completa de recibos e notificações.</p>
         </div>
         <button onClick={() => handleOpenModal()} className="btn-primary w-full sm:w-auto shadow-xl shadow-violet-500/20 bg-violet-600 hover:bg-violet-700">
           <Plus size={18} /> Novo Contrato
